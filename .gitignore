@@ -1,0 +1,30 @@
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Excel files (contains your personal data)
+*.xlsx
+*.xls
+*.csv
+uploads/
+
+# Python
+__pycache__/
+*.pyc
+venv/
+env/
+.env
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# API Keys (important!)
+config.py
+secrets.py
+*.key
+
+# Local settings
+settings_local.py

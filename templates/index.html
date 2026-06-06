@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MineTracker — Placement OS</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/dist/tabler-icons.min.css">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f2f1ee;--card:#fff;--border:rgba(0,0,0,0.08);--text:#1a1a1a;--muted:#6b6b6b;--accent:#3b4fd8;--accent-light:#eef0fd;--success:#16a34a;--danger:#dc2626;--warn:#d97706;--sidebar:#0f0e2e}
+body{font-family:'DM Sans',system-ui,sans-serif;background:var(--bg);color:var(--text);font-size:14px;line-height:1.5;height:100vh;overflow:hidden}
+.app{display:flex;height:100vh}
+.sidebar{width:225px;background:var(--sidebar);display:flex;flex-direction:column;padding:1.25rem .875rem;gap:1px;flex-shrink:0;overflow-y:auto}
+.logo{color:#fff;font-size:16px;font-weight:600;padding:0 8px 1.25rem;display:flex;align-items:center;gap:8px}
+.logo-badge{background:var(--accent);border-radius:8px;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0}
+.nav-group{font-size:9.5px;letter-spacing:1.3px;color:rgba(255,255,255,.22);padding:12px 8px 3px;text-transform:uppercase}
+.nav-item{display:flex;align-items:center;gap:9px;padding:7px 9px;border-radius:7px;cursor:pointer;color:rgba(255,255,255,.55);font-size:12.5px;font-weight:500;transition:all .12s;user-select:none}
+.nav-item:hover{background:rgba(255,255,255,.07);color:#fff}
+.nav-item.active{background:rgba(255,255,255,.13);color:#fff}
+.nav-item i{font-size:15px;width:17px;flex-shrink:0}
+.sidebar-footer{margin-top:auto;padding:12px 8px 0;border-top:1px solid rgba(255,255,255,.08)}
+.sidebar-name{color:rgba(255,255,255,.65);font-size:12px;font-weight:600;margin-bottom:2px}
+.sidebar-sub{color:rgba(255,255,255,.3);font-size:11px}
+.deadline-badge{background:rgba(220,38,38,.2);color:#fca5a5;border-radius:6px;padding:3px 8px;font-size:11px;margin-top:6px;display:inline-block}
+.main{flex:1;overflow-y:auto;padding:1.75rem 2rem;display:flex;flex-direction:column;gap:1.25rem}
+.page{display:none;flex-direction:column;gap:1.25rem}
+.page.active{display:flex}
+.page-header{display:flex;justify-content:space-between;align-items:flex-start;gap:1rem;flex-wrap:wrap}
+.page-title{font-size:20px;font-weight:600;letter-spacing:-.4px}
+.page-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.btn{display:inline-flex;align-items:center;gap:5px;padding:7px 13px;border-radius:7px;font-size:12.5px;font-weight:500;cursor:pointer;border:none;transition:all .12s;font-family:inherit;text-decoration:none}
+.btn-primary{background:var(--accent);color:#fff}.btn-primary:hover{opacity:.87}
+.btn-ghost{background:transparent;border:.5px solid rgba(0,0,0,.13);color:var(--text)}.btn-ghost:hover{background:rgba(0,0,0,.04)}
+.btn-success{background:#dcfce7;color:#15803d;border:.5px solid #bbf7d0}
+.btn-danger{background:#fef2f2;color:var(--danger);border:.5px solid #fecaca}
+.btn-warn{background:#fffbeb;color:var(--warn);border:.5px solid #fde68a}
+.btn-sm{padding:5px 10px;font-size:11.5px}
+.cards-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.stat-card{background:var(--card);border:.5px solid var(--border);border-radius:11px;padding:.875rem 1rem}
+.stat-label{font-size:10.5px;color:var(--muted);margin-bottom:5px;text-transform:uppercase;letter-spacing:.5px;display:flex;align-items:center;gap:4px}
+.stat-value{font-size:26px;font-weight:600;letter-spacing:-1px;line-height:1}
+.stat-sub{font-size:10.5px;color:var(--muted);margin-top:3px}
+.card{background:var(--card);border:.5px solid var(--border);border-radius:11px;padding:1.125rem}
+.card-title{font-size:13.5px;font-weight:600;margin-bottom:.875rem;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.problem-row{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:.5px solid var(--border)}
+.problem-row:last-child{border-bottom:none}
+.prob-status{width:20px;height:20px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:11px;cursor:pointer;border:.5px solid var(--border);transition:all .12s;background:var(--bg)}
+.prob-status.solved{background:#dcfce7;border-color:#86efac;color:#15803d}
+.prob-status.attempted{background:#fffbeb;border-color:#fde68a;color:var(--warn)}
+.prob-status.skipped{background:#fef2f2;border-color:#fecaca;color:var(--danger)}
+.prob-info{flex:1;min-width:0}
+.prob-name{font-size:13px;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.prob-name a{color:inherit;text-decoration:none}.prob-name a:hover{color:var(--accent);text-decoration:underline}
+.prob-name.done{text-decoration:line-through;color:var(--muted)}
+.prob-meta{display:flex;gap:5px;margin-top:3px;flex-wrap:wrap;align-items:center}
+.prob-actions{display:flex;gap:2px;margin-left:auto;flex-shrink:0}
+.badge{font-size:10.5px;padding:2px 7px;border-radius:20px;font-weight:500;white-space:nowrap}
+.b-high{background:#fef2f2;color:#b91c1c}.b-medium{background:#fffbeb;color:#b45309}.b-low{background:#f0fdf4;color:#15803d}
+.b-dsa{background:#eff6ff;color:#1d4ed8}.b-aptitude{background:#f5f3ff;color:#6d28d9}
+.b-verbal{background:#fdf4ff;color:#7e22ce}.b-interview{background:#fff7ed;color:#c2410c}.b-hr{background:#fdf2f8;color:#9d174d}
+.b-solved{background:#dcfce7;color:#15803d}.b-attempted{background:#fffbeb;color:#b45309}
+.b-skipped{background:#fef2f2;color:#b91c1c}.b-pending{background:#f8f7f4;color:#57534e}
+.b-lc{background:#fef9c3;color:#854d0e}.b-gfg{background:#dcfce7;color:#166534}.b-custom{background:#f1f5f9;color:#475569}.b-yt{background:#fef2f2;color:#b91c1c}
+.icon-btn{background:none;border:none;cursor:pointer;color:var(--muted);padding:4px;border-radius:5px;font-size:13px;display:flex;align-items:center;font-family:inherit}
+.icon-btn:hover{background:var(--bg);color:var(--text)}
+.progress-bar{height:5px;background:rgba(0,0,0,.07);border-radius:4px;overflow:hidden;margin:6px 0}
+.progress-fill{height:100%;background:var(--accent);border-radius:4px;transition:width .4s}
+.progress-fill.green{background:var(--success)}.progress-fill.orange{background:var(--warn)}.progress-fill.red{background:var(--danger)}
+.streak-box{background:linear-gradient(135deg,#fef3c7,#fde68a);border-radius:10px;padding:12px 14px;display:flex;align-items:center;gap:10px}
+.streak-num{font-size:28px;font-weight:700;color:#92400e;line-height:1}
+.upload-zone{border:2px dashed rgba(0,0,0,.11);border-radius:10px;padding:2.5rem;text-align:center;cursor:pointer;transition:all .18s}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-light)}
+input[type=file]{display:none}
+.table{width:100%;border-collapse:collapse}
+.table th{text-align:left;font-size:10.5px;font-weight:600;color:var(--muted);padding:9px 12px;border-bottom:.5px solid var(--border);text-transform:uppercase;letter-spacing:.5px}
+.table td{padding:9px 12px;border-bottom:.5px solid var(--border);font-size:12.5px}
+.table tr:last-child td{border-bottom:none}
+.table tbody tr:hover td{background:var(--bg)}
+.ai-box{background:linear-gradient(135deg,#f0f4ff,#f5f3ff);border:.5px solid #c7d2fe;border-radius:10px;padding:.875rem 1.125rem;display:flex;gap:10px;align-items:flex-start}
+.ai-icon{width:30px;height:30px;border-radius:7px;background:var(--accent);display:flex;align-items:center;justify-content:center;color:#fff;flex-shrink:0;font-size:14px}
+.ai-text{font-size:12.5px;line-height:1.7;color:#1e3a8a;flex:1}
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;z-index:300;backdrop-filter:blur(3px)}
+.modal{background:var(--card);border-radius:14px;padding:1.5rem;width:520px;max-width:94vw;box-shadow:0 20px 60px rgba(0,0,0,.18);max-height:90vh;overflow-y:auto}
+.modal-title{font-size:15px;font-weight:600;margin-bottom:1.125rem;display:flex;justify-content:space-between;align-items:center}
+.form-group{display:flex;flex-direction:column;gap:4px;margin-bottom:12px}
+.form-label{font-size:10.5px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.form-input{padding:7px 9px;border:.5px solid rgba(0,0,0,.13);border-radius:7px;font-size:13px;background:var(--bg);color:var(--text);font-family:inherit;transition:border-color .12s}
+.form-input:focus{outline:none;border-color:var(--accent)}
+.form-row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.set-row{display:flex;align-items:center;justify-content:space-between;padding:11px 0;border-bottom:.5px solid var(--border);font-size:13px}
+.set-row:last-child{border:none}
+.toggle{width:34px;height:18px;background:rgba(0,0,0,.14);border-radius:18px;cursor:pointer;position:relative;transition:background .18s;flex-shrink:0}
+.toggle.on{background:var(--accent)}
+.toggle::after{content:'';position:absolute;width:13px;height:13px;background:#fff;border-radius:50%;top:2.5px;left:2.5px;transition:left .18s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle.on::after{left:18.5px}
+.chat-messages{max-height:280px;overflow-y:auto;display:flex;flex-direction:column;gap:8px;margin-bottom:10px}
+.chat-msg{padding:8px 12px;border-radius:8px;font-size:12.5px;line-height:1.6;max-width:85%}
+.chat-msg.user{background:var(--accent);color:#fff;align-self:flex-end}
+.chat-msg.ai{background:var(--bg);border:.5px solid var(--border);align-self:flex-start}
+.chat-input-row{display:flex;gap:8px}
+.algo-card{background:var(--card);border:.5px solid var(--border);border-radius:10px;padding:1rem}
+.mastery-btn{padding:4px 10px;border-radius:6px;font-size:11px;font-weight:500;cursor:pointer;border:.5px solid var(--border);background:var(--bg);color:var(--muted);font-family:inherit;transition:all .12s}
+.mastery-btn.am{background:var(--accent);color:#fff;border-color:var(--accent)}
+.empty{text-align:center;padding:2.5rem 1rem;color:var(--muted)}
+.empty i{font-size:32px;display:block;margin-bottom:8px;opacity:.3}
+.spin{display:inline-block;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+.toast{position:fixed;bottom:1.25rem;right:1.25rem;background:#0f0e2e;color:#fff;padding:9px 14px;border-radius:9px;font-size:12.5px;font-weight:500;z-index:999;display:flex;align-items:center;gap:7px;box-shadow:0 4px 16px rgba(0,0,0,.2);animation:slideup .22s ease}
+@keyframes slideup{from{transform:translateY(8px);opacity:0}to{transform:translateY(0);opacity:1}}
+.two-col{display:grid;grid-template-columns:1fr 1fr;gap:1.125rem}
+.goal-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.goal-label{font-size:11.5px;color:var(--muted);width:75px;flex-shrink:0}
+.goal-count{font-size:12px;font-weight:600;width:55px;text-align:right;flex-shrink:0}
+.days-counter{background:linear-gradient(135deg,#fef2f2,#fff1f2);border:.5px solid #fecaca;border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:12px}
+.days-num{font-size:32px;font-weight:700;color:var(--danger);line-height:1}
+.chart-wrap{display:flex;align-items:flex-end;gap:3px;height:80px}
+.chart-col{display:flex;flex-direction:column;align-items:center;gap:2px;flex:1}
+.chart-bar{width:100%;border-radius:3px 3px 0 0;min-height:2px}
+.bar-solved{background:var(--accent)}.bar-target{background:rgba(59,79,216,.12)}
+.chart-lbl{font-size:9px;color:var(--muted)}
+.tabs{display:flex;gap:3px;background:var(--bg);border-radius:9px;padding:3px;border:.5px solid var(--border);width:fit-content}
+.tab{padding:5px 13px;border-radius:6px;font-size:12.5px;font-weight:500;cursor:pointer;color:var(--muted);transition:all .12s}
+.tab.active{background:var(--card);color:var(--text);box-shadow:0 1px 3px rgba(0,0,0,.07)}
+body.dark{--bg:#0d0d18;--card:#161623;--border:rgba(255,255,255,.07);--text:#e2e2f0;--muted:#777;--accent-light:#1a1c3a}
+body.dark .ai-box{background:linear-gradient(135deg,#141830,#1a1535);border-color:#2d3480}
+body.dark .ai-text{color:#a5b4fc}
+body.dark .streak-box{background:linear-gradient(135deg,#3d2c05,#4a3608)}
+</style>
+</head>
+<body>
+<div class="app">
+
+<div class="sidebar">
+  <div class="logo"><div class="logo-badge">⛏</div>MineTracker</div>
+  <div class="nav-item active" onclick="nav('hub',this)"><i class="ti ti-home"></i>Daily Hub</div>
+  <div class="nav-item" onclick="nav('problems',this)"><i class="ti ti-list-check"></i>Problem Tracker</div>
+  <div class="nav-item" onclick="nav('topic',this)"><i class="ti ti-book"></i>Topic Planner</div>
+  <div class="nav-item" onclick="nav('algorithms',this)"><i class="ti ti-circuit-board"></i>Algorithms</div>
+  <div class="nav-group">Projects</div>
+  <div class="nav-item" onclick="nav('projects',this)"><i class="ti ti-code"></i>Projects</div>
+  <div class="nav-group">Analytics</div>
+  <div class="nav-item" onclick="nav('progress',this)"><i class="ti ti-chart-bar"></i>Progress Board</div>
+  <div class="nav-item" onclick="nav('coach',this)"><i class="ti ti-robot"></i>AI Coach</div>
+  <div class="nav-group">Data</div>
+  <div class="nav-item" onclick="nav('upload',this)"><i class="ti ti-upload"></i>Upload Excel</div>
+  <div class="nav-item" onclick="nav('settings',this)"><i class="ti ti-settings"></i>Settings</div>
+  <div class="sidebar-footer">
+    <div class="sidebar-name" id="sb-name">Student</div>
+    <div class="sidebar-sub">Goal: <span id="sb-goal">10</span>/day</div>
+    <div class="deadline-badge" id="sb-deadline">Oct 2026</div>
+  </div>
+</div>
+
+<div class="main">
+
+<!-- DAILY HUB -->
+<div class="page active" id="page-hub">
+  <div class="page-header">
+    <div><div class="page-title" id="hub-greet">Good morning! 👋</div><div class="page-sub" id="hub-date"></div></div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-ghost btn-sm" onclick="refreshBriefing()"><i class="ti ti-refresh"></i>Refresh AI</button>
+      <button class="btn btn-primary" onclick="openAddProblem()"><i class="ti ti-plus"></i>Add Problem</button>
+    </div>
+  </div>
+  <div class="cards-row">
+    <div class="stat-card"><div class="stat-label"><i class="ti ti-list"></i>Total</div><div class="stat-value" id="s-total">—</div><div class="stat-sub">problems</div></div>
+    <div class="stat-card"><div class="stat-label" style="color:var(--success)"><i class="ti ti-circle-check"></i>Solved</div><div class="stat-value" style="color:var(--success)" id="s-solved">—</div></div>
+    <div class="stat-card"><div class="stat-label" style="color:var(--accent)"><i class="ti ti-bolt"></i>Attempted</div><div class="stat-value" style="color:var(--accent)" id="s-attempted">—</div></div>
+    <div class="stat-card"><div class="stat-label" style="color:var(--warn)"><i class="ti ti-clock"></i>Pending</div><div class="stat-value" style="color:var(--warn)" id="s-pending">—</div></div>
+    <div class="stat-card"><div class="stat-label" style="color:var(--danger)"><i class="ti ti-x"></i>Skipped</div><div class="stat-value" style="color:var(--danger)" id="s-skipped">—</div></div>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 270px;gap:1.125rem">
+    <div class="card">
+      <div class="card-title">Today's Plan <span style="font-size:11px;color:var(--muted);font-weight:400" id="today-lbl"></span></div>
+      <div class="progress-bar"><div class="progress-fill" id="today-prog" style="width:0%"></div></div>
+      <div id="today-list"><div class="empty"><span class="spin">↻</span></div></div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.875rem">
+      <div class="streak-box">
+        <div class="streak-num" id="hub-streak">0</div>
+        <div><div style="font-size:13px;font-weight:600;color:#78350f">Day Streak 🔥</div><div style="font-size:11px;color:#a16207;margin-top:2px" id="hub-days-left"></div></div>
+      </div>
+      <div class="card" style="padding:.875rem">
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:8px">This Week</div>
+        <div class="goal-row"><div class="goal-label">Problems</div><div style="flex:1"><div class="progress-bar" style="margin:0"><div class="progress-fill" id="week-prog" style="width:0%"></div></div></div><div class="goal-count" id="week-count">0/70</div></div>
+        <div style="font-size:11px;color:var(--muted)" id="week-status"></div>
+      </div>
+      <div class="card" style="padding:.875rem">
+        <div style="font-size:12.5px;font-weight:600;margin-bottom:8px">This Month</div>
+        <div class="goal-row"><div class="goal-label">Problems</div><div style="flex:1"><div class="progress-bar" style="margin:0"><div class="progress-fill" id="month-prog" style="width:0%"></div></div></div><div class="goal-count" id="month-count">0/300</div></div>
+        <div style="font-size:11px;color:var(--muted)" id="month-status"></div>
+      </div>
+    </div>
+  </div>
+  <div class="ai-box">
+    <div class="ai-icon"><i class="ti ti-robot"></i></div>
+    <div style="flex:1">
+      <div style="font-size:10.5px;color:#6366f1;font-weight:600;margin-bottom:3px" id="ai-model-tag">AI BRIEFING</div>
+      <div class="ai-text" id="ai-briefing-text">Loading your daily AI briefing...</div>
+    </div>
+  </div>
+</div>
+
+<!-- PROBLEM TRACKER -->
+<div class="page" id="page-problems">
+  <div class="page-header">
+    <div><div class="page-title">Problem Tracker</div><div class="page-sub">All problems — DSA, Aptitude, Verbal, Interview, HR</div></div>
+    <div style="display:flex;gap:7px;flex-wrap:wrap">
+      <input class="form-input" id="p-search" placeholder="Search..." style="width:140px" oninput="renderProblems()">
+      <select class="form-input" id="p-cat" onchange="renderProblems()" style="width:115px"><option value="">All categories</option><option>DSA</option><option>Aptitude</option><option>Verbal</option><option>Interview</option><option>HR</option></select>
+      <select class="form-input" id="p-stat" onchange="renderProblems()" style="width:110px"><option value="">All statuses</option><option>Pending</option><option>Solved</option><option>Attempted</option><option>Skipped</option></select>
+      <select class="form-input" id="p-diff" onchange="renderProblems()" style="width:100px"><option value="">All levels</option><option>Easy</option><option>Medium</option><option>Hard</option></select>
+      <button class="btn btn-primary" onclick="openAddProblem()"><i class="ti ti-plus"></i>Add</button>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;align-items:center">
+    <div style="font-size:12px;color:var(--muted)" id="p-count"></div>
+    <button class="btn btn-ghost btn-sm" onclick="openDeleteBatch()"><i class="ti ti-trash"></i>Delete batch</button>
+  </div>
+  <div class="card" style="padding:0;overflow:hidden">
+    <table class="table">
+      <thead><tr><th>Problem</th><th>Topic</th><th>Difficulty</th><th>Platform</th><th>Status</th><th>Links</th><th></th></tr></thead>
+      <tbody id="problems-body"></tbody>
+    </table>
+  </div>
+</div>
+
+<!-- TOPIC PLANNER -->
+<div class="page" id="page-topic">
+  <div class="page-header"><div><div class="page-title">Topic Planner</div><div class="page-sub">Study a topic → get all problems + AI-curated free resources</div></div></div>
+  <div class="card">
+    <div style="display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap">
+      <div class="form-group" style="flex:1;margin:0"><div class="form-label">Topic name</div><input class="form-input" id="topic-input" placeholder="Binary Search, Arrays, SQL Joins, DP..." list="topics-list"><datalist id="topics-list"></datalist></div>
+      <button class="btn btn-primary" onclick="loadTopic()"><i class="ti ti-search"></i>Load Topic</button>
+    </div>
+  </div>
+  <div id="topic-result" style="display:none">
+    <div class="two-col">
+      <div class="card"><div class="card-title" id="topic-title">Problems</div><div id="topic-problems-list"></div></div>
+      <div style="display:flex;flex-direction:column;gap:.875rem">
+        <div class="card"><div class="card-title">Free Resources <span style="font-size:11px;color:var(--muted);font-weight:400">(AI curated)</span></div><div id="topic-resources"></div></div>
+        <div class="card" id="topic-algo-card" style="display:none"><div class="card-title">Related Pattern</div><div id="topic-algo-detail"></div></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ALGORITHMS -->
+<div class="page" id="page-algorithms">
+  <div class="page-header"><div><div class="page-title">Algorithm & Pattern Library</div><div class="page-sub">Master every coding pattern for placements</div></div></div>
+  <div id="algo-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:.875rem"></div>
+</div>
+
+<!-- PROJECTS -->
+<div class="page" id="page-projects">
+  <div class="page-header"><div><div class="page-title">Project Tracker</div><div class="page-sub">Track milestones for your placement projects</div></div><button class="btn btn-primary" onclick="openAddProject()"><i class="ti ti-plus"></i>Add Project</button></div>
+  <div id="projects-list" style="display:flex;flex-direction:column;gap:.875rem"></div>
+</div>
+
+<!-- PROGRESS BOARD -->
+<div class="page" id="page-progress">
+  <div class="page-header"><div><div class="page-title">Progress Board</div><div class="page-sub">Honest view — where you stand vs where you need to be</div></div></div>
+  <div class="two-col">
+    <div class="days-counter">
+      <div class="days-num" id="pr-days">—</div>
+      <div><div style="font-size:13px;font-weight:600;color:#b91c1c">Days to Placement</div><div style="font-size:11px;color:#ef4444;margin-top:2px" id="pr-pace"></div></div>
+    </div>
+    <div class="card" style="display:flex;align-items:center;gap:16px;padding:1rem">
+      <div>
+        <div style="font-size:32px;font-weight:700;letter-spacing:-1px" id="pr-readiness">0%</div>
+        <div style="font-size:12px;color:var(--muted)">Placement Readiness</div>
+        <div style="font-size:11.5px;margin-top:6px" id="pr-readiness-label"></div>
+      </div>
+      <svg width="70" height="70" viewBox="0 0 70 70">
+        <circle cx="35" cy="35" r="28" fill="none" stroke="rgba(0,0,0,.07)" stroke-width="7"/>
+        <circle cx="35" cy="35" r="28" fill="none" stroke="var(--accent)" stroke-width="7" stroke-dasharray="175.9" id="readiness-circle" stroke-dashoffset="175.9" stroke-linecap="round" transform="rotate(-90 35 35)" style="transition:stroke-dashoffset .6s"/>
+      </svg>
+    </div>
+  </div>
+  <div class="cards-row">
+    <div class="stat-card"><div class="stat-label">Total Solved</div><div class="stat-value" id="pr-solved">—</div></div>
+    <div class="stat-card"><div class="stat-label">Completion</div><div class="stat-value" id="pr-rate">—</div></div>
+    <div class="stat-card"><div class="stat-label">Streak</div><div class="stat-value" id="pr-streak">—</div></div>
+    <div class="stat-card"><div class="stat-label">Need/day</div><div class="stat-value" id="pr-need">—</div></div>
+    <div class="stat-card"><div class="stat-label">Skipped</div><div class="stat-value" style="color:var(--danger)" id="pr-skipped">—</div></div>
+  </div>
+  <div class="two-col">
+    <div class="card"><div class="card-title">Last 30 Days</div><div class="chart-wrap" id="pr-chart"></div></div>
+    <div class="card"><div class="card-title">By Category</div><div id="pr-cats"></div></div>
+  </div>
+  <div class="ai-box"><div class="ai-icon"><i class="ti ti-brain"></i></div><div class="ai-text" id="pr-ai-report">Generating report...</div></div>
+</div>
+
+<!-- AI COACH -->
+<div class="page" id="page-coach">
+  <div class="page-header"><div><div class="page-title">AI Coach</div><div class="page-sub">Brutally honest placement coaching — Groq + Gemini + rule-based fallback</div></div></div>
+  <div class="two-col">
+    <div class="card">
+      <div class="card-title">Ask AI Coach</div>
+      <div class="chat-messages" id="chat-msgs"></div>
+      <div class="chat-input-row">
+        <input class="form-input" id="chat-input" placeholder="Am I ready for placements? What to study today?" style="flex:1" onkeydown="if(event.key==='Enter')sendChat()">
+        <button class="btn btn-primary" onclick="sendChat()"><i class="ti ti-send"></i></button>
+      </div>
+      <div style="display:flex;gap:5px;margin-top:8px;flex-wrap:wrap">
+        <button class="btn btn-ghost btn-sm" onclick="quickChat('Am I on track for October 2026 placements?')">On track?</button>
+        <button class="btn btn-ghost btn-sm" onclick="quickChat('What should I focus on this week?')">This week</button>
+        <button class="btn btn-ghost btn-sm" onclick="quickChat('Give me 5 easy DSA problems to start with')">Easy problems</button>
+        <button class="btn btn-ghost btn-sm" onclick="quickChat('What are my weakest areas right now?')">Weak areas</button>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;gap:.875rem">
+      <div class="card">
+        <div class="card-title">Today's AI Feedback <span style="font-size:10px;color:var(--muted);font-weight:400" id="coach-model"></span></div>
+        <div style="font-size:12.5px;line-height:1.7;color:var(--text)" id="coach-daily">Loading...</div>
+        <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="refreshBriefing()"><i class="ti ti-refresh"></i>Refresh</button>
+      </div>
+      <div class="card">
+        <div class="card-title">🔭 New Tech Radar</div>
+        <div style="font-size:12.5px;line-height:1.8;color:var(--muted)">
+          Trending in 2025-26 interviews:<br>
+          <span class="badge b-dsa" style="margin:2px">LangChain</span><span class="badge b-dsa" style="margin:2px">FastAPI</span><span class="badge b-aptitude" style="margin:2px">System Design</span><span class="badge b-aptitude" style="margin:2px">RAG / Vector DBs</span><span class="badge b-verbal" style="margin:2px">Docker basics</span><span class="badge b-interview" style="margin:2px">SQL Optimization</span><span class="badge b-hr" style="margin:2px">MLOps pipelines</span>
+          <br><br>
+          <a href="https://roadmap.sh" target="_blank" style="color:var(--accent);font-size:12px">📍 roadmap.sh — Free learning paths for all topics</a><br>
+          <a href="https://neetcode.io" target="_blank" style="color:var(--accent);font-size:12px">💻 neetcode.io — Best free DSA roadmap</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- UPLOAD -->
+<div class="page" id="page-upload">
+  <div class="page-header"><div><div class="page-title">Upload Excel</div><div class="page-sub">Import problems from .xlsx / .csv — multiple sheets supported, AI maps columns</div></div></div>
+  <div class="card">
+    <div class="upload-zone" id="dropzone" onclick="document.getElementById('file-in').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="onDrop(event)">
+      <div style="font-size:40px;color:var(--muted);margin-bottom:12px"><i class="ti ti-file-spreadsheet"></i></div>
+      <div style="font-size:15px;font-weight:600;margin-bottom:5px">Drop your Excel file here</div>
+      <div style="font-size:12px;color:var(--muted)">.xlsx / .xls / .csv · Multiple sheets · AI auto-detects columns</div>
+    </div>
+    <input type="file" id="file-in" accept=".xlsx,.xls,.csv" onchange="onFileSelect(this)">
+    <div style="display:flex;gap:14px;margin-top:14px;align-items:center;flex-wrap:wrap">
+      <div style="font-size:12px;font-weight:600;color:var(--muted)">Import mode:</div>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer"><input type="radio" name="imode" value="add" checked> Add new only</label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer"><input type="radio" name="imode" value="merge"> Merge (skip duplicates)</label>
+      <label style="display:flex;align-items:center;gap:5px;font-size:12.5px;cursor:pointer"><input type="radio" name="imode" value="replace"> Replace all</label>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-title">Excel Format Guide</div>
+    <div class="tabs" style="margin-bottom:12px">
+      <div class="tab active" onclick="switchTab(this,'fmt-dsa')">DSA Sheet</div>
+      <div class="tab" onclick="switchTab(this,'fmt-apti')">Aptitude</div>
+      <div class="tab" onclick="switchTab(this,'fmt-verbal')">Verbal/Interview</div>
+    </div>
+    <div id="fmt-dsa">
+      <table class="table"><thead><tr><th>Topic</th><th>Problem Name</th><th>Difficulty</th><th>Problem Link</th><th>Resource Link</th><th>Date</th></tr></thead>
+      <tbody><tr><td>Arrays</td><td>Two Sum</td><td>Easy</td><td>leetcode.com/problems/two-sum</td><td>neetcode.io/problems/two-sum</td><td>2025-06-10</td></tr>
+      <tr><td>Binary Search</td><td>Search in Rotated Array</td><td>Medium</td><td>leetcode.com/...</td><td>youtube.com/...</td><td>2025-06-11</td></tr></tbody></table>
+    </div>
+    <div id="fmt-apti" style="display:none"><table class="table"><thead><tr><th>Topic</th><th>Problem</th><th>Link</th><th>Date</th></tr></thead><tbody><tr><td>Time & Work</td><td>Pipes and Cisterns</td><td>indiabix.com/...</td><td>2025-06-10</td></tr></tbody></table></div>
+    <div id="fmt-verbal" style="display:none"><table class="table"><thead><tr><th>Topic</th><th>Exercise</th><th>Link</th><th>Date</th></tr></thead><tbody><tr><td>Reading Comprehension</td><td>RC Practice Set 1</td><td>indiabix.com/...</td><td>2025-06-10</td></tr></tbody></table></div>
+    <div style="font-size:11.5px;color:var(--muted);margin-top:10px"><i class="ti ti-info-circle"></i> Column names auto-detected. Sheet name sets category (DSA/Aptitude/Verbal/Interview/HR). Date can be any format.</div>
+  </div>
+  <div id="preview-card" class="card" style="display:none">
+    <div class="card-title" id="preview-title">Preview</div>
+    <div id="preview-body"></div>
+    <div style="display:flex;gap:8px;margin-top:12px">
+      <button class="btn btn-primary" id="import-btn" onclick="confirmImport()"><i class="ti ti-check"></i>Import All</button>
+      <button class="btn btn-ghost" onclick="cancelImport()">Cancel</button>
+    </div>
+  </div>
+  <div class="card"><div class="card-title">Import History</div><div id="import-history"><div class="empty"><i class="ti ti-history"></i>No imports yet</div></div></div>
+</div>
+
+<!-- SETTINGS -->
+<div class="page" id="page-settings">
+  <div class="page-header"><div><div class="page-title">Settings</div><div class="page-sub">Configure MineTracker</div></div><button class="btn btn-primary" onclick="saveSettings()"><i class="ti ti-check"></i>Save All</button></div>
+  <div class="two-col">
+    <div style="display:flex;flex-direction:column;gap:.875rem">
+      <div class="card">
+        <div class="card-title">Profile</div>
+        <div class="form-group"><div class="form-label">Your Name</div><input class="form-input" id="set-name" placeholder="Your name"></div>
+        <div class="form-row">
+          <div class="form-group"><div class="form-label">Daily Goal</div><input class="form-input" type="number" id="set-goal" value="10" min="1" max="50"></div>
+          <div class="form-group"><div class="form-label">Study Hours/Day</div><input class="form-input" type="number" id="set-hours" value="4"></div>
+        </div>
+        <div class="form-row">
+          <div class="form-group"><div class="form-label">Placement Deadline</div><input class="form-input" type="date" id="set-deadline"></div>
+          <div class="form-group"><div class="form-label">Target Companies</div><input class="form-input" id="set-companies" placeholder="TCS, Zoho, Infosys..."></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">Preferences</div>
+        <div class="set-row"><div style="font-weight:500">Dark Mode</div><div class="toggle" id="tog-dark" onclick="toggleDark()"></div></div>
+        <div class="set-row"><div style="font-weight:500">Auto-miss overdue problems</div><div class="toggle on" id="tog-miss" onclick="this.classList.toggle('on')"></div></div>
+      </div>
+      <div class="card"><div class="card-title">Danger Zone</div><button class="btn btn-danger" onclick="clearAll()"><i class="ti ti-trash"></i>Clear All Problems</button></div>
+    </div>
+    <div class="card">
+      <div class="card-title">AI API Keys <span style="font-size:11px;color:var(--muted);font-weight:400">(saved locally in your DB)</span></div>
+      <div class="form-group"><div class="form-label">Groq API Key (Free — Fastest)</div><input class="form-input" type="password" id="set-groq" placeholder="gsk_..."><div style="font-size:11px;color:var(--muted);margin-top:3px">Free at → <a href="https://console.groq.com" target="_blank" style="color:var(--accent)">console.groq.com</a></div></div>
+      <div class="form-group"><div class="form-label">Gemini API Key (Free — Smartest)</div><input class="form-input" type="password" id="set-gemini" placeholder="AIza..."><div style="font-size:11px;color:var(--muted);margin-top:3px">Free at → <a href="https://aistudio.google.com" target="_blank" style="color:var(--accent)">aistudio.google.com</a></div></div>
+      <div class="form-group"><div class="form-label">OpenRouter Key (Multiple free models)</div><input class="form-input" type="password" id="set-openrouter" placeholder="sk-or-..."><div style="font-size:11px;color:var(--muted);margin-top:3px">Free at → <a href="https://openrouter.ai" target="_blank" style="color:var(--accent)">openrouter.ai</a></div></div>
+      <div class="form-group"><div class="form-label">Primary AI Provider</div>
+        <select class="form-input" id="set-ai-provider"><option value="groq">Groq (Fastest)</option><option value="gemini">Gemini (Smartest free)</option><option value="openrouter">OpenRouter</option></select>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div>
+</div>
+
+<!-- ADD PROBLEM MODAL -->
+<div class="overlay" id="prob-modal" style="display:none" onclick="if(event.target===this)closeProbModal()">
+  <div class="modal">
+    <div class="modal-title"><span id="prob-modal-title">Add Problem</span><button class="icon-btn" onclick="closeProbModal()"><i class="ti ti-x"></i></button></div>
+    <div class="form-group"><div class="form-label">Problem Name *</div><input class="form-input" id="m-pname" placeholder="e.g. Two Sum, Time & Work..."></div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Category</div><select class="form-input" id="m-pcat"><option>DSA</option><option>Aptitude</option><option>Verbal</option><option>Interview</option><option>HR</option></select></div>
+      <div class="form-group"><div class="form-label">Topic</div><input class="form-input" id="m-ptopic" placeholder="Arrays, Binary Search..."></div>
+    </div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Difficulty</div><select class="form-input" id="m-pdiff"><option>Easy</option><option selected>Medium</option><option>Hard</option></select></div>
+      <div class="form-group"><div class="form-label">Platform</div><select class="form-input" id="m-pplatform"><option>LeetCode</option><option>GFG</option><option>HackerRank</option><option>IndiaBix</option><option>YouTube</option><option>Custom</option></select></div>
+    </div>
+    <div class="form-group"><div class="form-label">Problem Link</div><input class="form-input" id="m-plink" placeholder="https://..."></div>
+    <div class="form-group"><div class="form-label">Resource Link</div><input class="form-input" id="m-presource" placeholder="https://..."></div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Scheduled Date</div><input class="form-input" type="date" id="m-pdate"></div>
+      <div class="form-group"><div class="form-label">Status</div><select class="form-input" id="m-pstatus"><option>Pending</option><option>Solved</option><option>Attempted</option><option>Skipped</option></select></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn btn-ghost" onclick="closeProbModal()">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProblem()"><i class="ti ti-check"></i>Save</button>
+    </div>
+  </div>
+</div>
+
+<!-- ADD PROJECT MODAL -->
+<div class="overlay" id="proj-modal" style="display:none" onclick="if(event.target===this)this.style.display='none'">
+  <div class="modal">
+    <div class="modal-title">Add Project<button class="icon-btn" style="margin-left:auto" onclick="document.getElementById('proj-modal').style.display='none'"><i class="ti ti-x"></i></button></div>
+    <div class="form-group"><div class="form-label">Project Name *</div><input class="form-input" id="m-proj-name" placeholder="e.g. MineTracker"></div>
+    <div class="form-group"><div class="form-label">Description</div><input class="form-input" id="m-proj-desc" placeholder="Brief description"></div>
+    <div class="form-group"><div class="form-label">Tech Stack</div><input class="form-input" id="m-proj-tech" placeholder="Python, Flask, SQLite..."></div>
+    <div class="form-row">
+      <div class="form-group"><div class="form-label">Target Date</div><input class="form-input" type="date" id="m-proj-date"></div>
+      <div class="form-group"><div class="form-label">GitHub Link</div><input class="form-input" id="m-proj-git" placeholder="https://github.com/..."></div>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px">
+      <button class="btn btn-ghost" onclick="document.getElementById('proj-modal').style.display='none'">Cancel</button>
+      <button class="btn btn-primary" onclick="saveProject()"><i class="ti ti-check"></i>Save</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast" style="display:none"></div>
+
+<script>
+const API='';let editProbId=null,pendingImport=[],allProblems=[],settings={};
+const TODAY=new Date().toISOString().split('T')[0];
+
+async function api(path,opts={}){
+  try{const r=await fetch(API+path,{headers:{'Content-Type':'application/json'},...opts});return await r.json();}
+  catch(e){toast('Server error — run: python app.py');return null;}
+}
+
+async function init(){
+  settings=await api('/api/settings')||{};
+  applySettings();
+  await renderHub();
+  loadTopicsList();
+  loadImportHistory();
+}
+
+function applySettings(){
+  document.getElementById('sb-name').textContent=settings.name||'Student';
+  document.getElementById('sb-goal').textContent=settings.daily_goal||'10';
+  const dl=settings.placement_deadline||'2026-10-01';
+  document.getElementById('sb-deadline').textContent=new Date(dl+'T00:00:00').toLocaleDateString('en-IN',{month:'short',year:'numeric'});
+  document.getElementById('set-name').value=settings.name||'';
+  document.getElementById('set-goal').value=settings.daily_goal||'10';
+  document.getElementById('set-hours').value=settings.study_hours||'4';
+  document.getElementById('set-deadline').value=settings.placement_deadline||'2026-10-01';
+  document.getElementById('set-companies').value=settings.target_companies||'';
+  document.getElementById('set-groq').value=settings.groq_api_key||'';
+  document.getElementById('set-gemini').value=settings.gemini_api_key||'';
+  document.getElementById('set-openrouter').value=settings.openrouter_api_key||'';
+  document.getElementById('set-ai-provider').value=settings.ai_provider||'groq';
+  if(settings.dark_mode==='true'){document.body.classList.add('dark');document.getElementById('tog-dark').classList.add('on');}
+}
+
+function nav(page,el){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+page).classList.add('active');
+  if(el)el.classList.add('active');
+  if(page==='hub')renderHub();
+  if(page==='problems')renderProblems();
+  if(page==='algorithms')renderAlgorithms();
+  if(page==='projects')renderProjects();
+  if(page==='progress')renderProgress();
+  if(page==='coach')renderCoach();
+  if(page==='upload')loadImportHistory();
+}
+
+function fmtDate(ds){if(!ds)return'—';return new Date(ds+'T00:00:00').toLocaleDateString('en-IN',{day:'numeric',month:'short'});}
+function catB(c){return`<span class="badge b-${(c||'dsa').toLowerCase()}">${c||'DSA'}</span>`;}
+function diffB(d){return`<span class="badge b-${(d||'medium').toLowerCase()}">${d||'Medium'}</span>`;}
+function statB(s){return`<span class="badge b-${(s||'pending').toLowerCase()}">${s||'Pending'}</span>`;}
+function platB(p){const m={'LeetCode':'b-lc','GFG':'b-gfg','YouTube':'b-yt'};return`<span class="badge ${m[p]||'b-custom'}">${p||'Custom'}</span>`;}
+
+async function renderHub(){
+  const h=new Date().getHours();
+  document.getElementById('hub-greet').textContent=(h<12?'Good morning':h<17?'Good afternoon':'Good evening')+', '+(settings.name||'Student')+' 👋';
+  document.getElementById('hub-date').textContent=new Date().toLocaleDateString('en-IN',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const data=await api('/api/dashboard');if(!data)return;
+  const s=data.stats;
+  document.getElementById('s-total').textContent=s.total;
+  document.getElementById('s-solved').textContent=s.solved;
+  document.getElementById('s-attempted').textContent=s.attempted;
+  document.getElementById('s-pending').textContent=s.pending;
+  document.getElementById('s-skipped').textContent=s.skipped;
+  document.getElementById('hub-streak').textContent=s.streak;
+  document.getElementById('hub-days-left').textContent=s.days_left+' days to placement';
+  document.getElementById('today-prog').style.width=s.today_pct+'%';
+  document.getElementById('today-lbl').textContent=s.today_solved+'/'+s.today_target+' done today';
+  const wk=data.weekly,wpct=wk.target_problems?Math.round(wk.done_problems/wk.target_problems*100):0;
+  document.getElementById('week-prog').style.width=wpct+'%';
+  document.getElementById('week-count').textContent=wk.done_problems+'/'+wk.target_problems;
+  document.getElementById('week-status').textContent=wpct>=100?'✅ Weekly goal achieved!':wpct>=50?'On track — keep going 💪':'Behind — push harder 🎯';
+  const mo=data.monthly,mpct=mo.target_problems?Math.round(mo.done_problems/mo.target_problems*100):0;
+  document.getElementById('month-prog').style.width=mpct+'%';
+  document.getElementById('month-count').textContent=mo.done_problems+'/'+mo.target_problems;
+  document.getElementById('month-status').textContent=mpct+'% of monthly goal';
+  renderPlan(data.today_plan,s.today_target);
+  if(data.ai_briefing){document.getElementById('ai-briefing-text').textContent=data.ai_briefing;document.getElementById('ai-model-tag').textContent='AI BRIEFING · '+data.ai_model.toUpperCase();}
+  else refreshBriefing();
+}
+
+function renderPlan(plan,target){
+  const list=document.getElementById('today-list');
+  if(!plan||!plan.length){list.innerHTML=`<div class="empty"><i class="ti ti-list-check"></i>No problems scheduled today<br><button class="btn btn-primary" style="margin-top:10px" onclick="openAddProblem()"><i class="ti ti-plus"></i>Add Problem</button></div>`;return;}
+  list.innerHTML=plan.map(p=>`
+    <div class="problem-row">
+      <div class="prob-status ${p.plan_status.toLowerCase()}" onclick="updateStatus(${p.id},'${p.plan_status}',this,event)" oncontextmenu="updateStatus(${p.id},'${p.plan_status}',this,event);return false;" title="Left click: next status | Right click: previous status">
+        ${p.plan_status==='Solved'?'✓':p.plan_status==='Attempted'?'⚡':p.plan_status==='Skipped'?'✗':''}
+      </div>
+      <div class="prob-info">
+        <div class="prob-name ${p.plan_status==='Solved'?'done':''}">
+          ${p.problem_link?`<a href="${p.problem_link}" target="_blank">${p.name}</a>`:p.name}
+        </div>
+        <div class="prob-meta">
+          ${catB(p.category)} ${diffB(p.difficulty)}
+          ${p.topic?`<span style="font-size:11px;color:var(--muted)">${p.topic}</span>`:''}
+          ${p.resource_link?`<a href="${p.resource_link}" target="_blank" style="font-size:11px;color:var(--accent)"><i class="ti ti-link"></i> Resource</a>`:''}
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+async function updateStatus(id,cur,el,event){
+  const cycle=['Pending','Solved','Attempted','Skipped'];
+  const next = event && event.button===2
+    ? cycle[(cycle.indexOf(cur)-1+cycle.length)%cycle.length]
+    : cycle[(cycle.indexOf(cur)+1)%cycle.length];
+
+  // 1. Update clicked button immediately
+  el.className='prob-status '+next.toLowerCase();
+  el.innerHTML=next==='Solved'?'✓':next==='Attempted'?'⚡':next==='Skipped'?'✗':'';
+  el.setAttribute('onclick',`updateStatus(${id},'${next}',this,event)`);
+  el.setAttribute('oncontextmenu',`updateStatus(${id},'${next}',this,event);return false;`);
+
+  // 2. Update strikethrough immediately
+  const nameEl=el.nextElementSibling?.querySelector('.prob-name');
+  if(nameEl){nameEl.classList.toggle('done',next==='Solved');}
+
+  // 3. Update BIG stat cards instantly (Total/Solved/Attempted/Pending/Skipped)
+  const statMap={'Solved':'s-solved','Attempted':'s-attempted','Pending':'s-pending','Skipped':'s-skipped'};
+  const prevEl=document.getElementById(statMap[cur]);
+  const nextEl=document.getElementById(statMap[next]);
+  if(prevEl){const v=parseInt(prevEl.textContent)||0;prevEl.textContent=Math.max(0,v-1);}
+  if(nextEl){const v=parseInt(nextEl.textContent)||0;nextEl.textContent=v+1;}
+
+  // 4. Update today progress bar instantly
+  const todayItems=document.querySelectorAll('#today-list .prob-status');
+  const solvedCount=Array.from(todayItems).filter(b=>b.classList.contains('solved')).length;
+  const target=parseInt(document.getElementById('sb-goal').textContent)||10;
+  const pct=Math.round(solvedCount/target*100);
+  document.getElementById('today-prog').style.width=pct+'%';
+  document.getElementById('today-lbl').textContent=solvedCount+'/'+target+' done today';
+
+  // 5. Save to DB in background
+  await api(`/api/problems/${id}`,{method:'PUT',body:JSON.stringify({status:next})});
+  toast((event&&event.button===2?'◀ ':'▶ ')+next);
+}
+
+async function refreshBriefing(){
+  document.getElementById('ai-briefing-text').innerHTML='<span class="spin">↻</span> Generating AI briefing...';
+  const data=await api('/api/ai/briefing',{method:'POST'});
+  if(data){
+    document.getElementById('ai-briefing-text').textContent=data.content;
+    document.getElementById('ai-model-tag').textContent='AI BRIEFING · '+data.model.toUpperCase();
+    document.getElementById('coach-daily').textContent=data.content;
+    document.getElementById('coach-model').textContent='· '+data.model;
+  }
+}
+
+async function renderProblems(){
+  const cat=document.getElementById('p-cat').value,stat=document.getElementById('p-stat').value,diff=document.getElementById('p-diff').value,search=document.getElementById('p-search').value;
+  const problems=await api(`/api/problems?category=${cat}&status=${stat}&difficulty=${diff}&search=${encodeURIComponent(search)}`);
+  if(!problems)return;allProblems=problems;
+  document.getElementById('p-count').textContent=problems.length+' problems';
+  const body=document.getElementById('problems-body');
+  if(!problems.length){body.innerHTML=`<tr><td colspan="7"><div class="empty"><i class="ti ti-list"></i>No problems found</div></td></tr>`;return;}
+  body.innerHTML=problems.map(p=>`<tr>
+    <td><div style="font-weight:500;font-size:12.5px">${p.name}</div>${p.notes?`<div style="font-size:11px;color:var(--muted)">${p.notes}</div>`:''}</td>
+    <td>${p.topic||'—'}</td><td>${diffB(p.difficulty)}</td><td>${platB(p.platform)}</td>
+    <td><span class="badge b-${p.status.toLowerCase()}" style="cursor:pointer" onclick="cycleProb(${p.id})" title="Click to cycle">${p.status}</span></td>
+    <td><div style="display:flex;gap:4px">
+      ${p.problem_link?`<a href="${p.problem_link}" target="_blank" class="btn btn-ghost btn-sm"><i class="ti ti-external-link"></i></a>`:''}
+      ${p.resource_link?`<a href="${p.resource_link}" target="_blank" class="btn btn-warn btn-sm"><i class="ti ti-link"></i></a>`:''}
+    </div></td>
+    <td><div style="display:flex;gap:2px">
+      <button class="icon-btn" onclick="editProblem(${p.id})"><i class="ti ti-edit"></i></button>
+      <button class="icon-btn" onclick="deleteProb(${p.id})"><i class="ti ti-trash"></i></button>
+    </div></td>
+  </tr>`).join('');
+}
+
+async function cycleProb(id){
+  const cycle=['Pending','Solved','Attempted','Skipped'];
+  const p=allProblems.find(x=>x.id===id);if(!p)return;
+  const next=cycle[(cycle.indexOf(p.status)+1)%cycle.length];
+  await api(`/api/problems/${id}`,{method:'PUT',body:JSON.stringify({status:next})});
+  toast('→ '+next);renderProblems();renderHub();
+}
+
+async function deleteProb(id){if(!confirm('Delete this problem?'))return;await api(`/api/problems/${id}`,{method:'DELETE'});toast('Deleted');renderProblems();}
+
+function openAddProblem(){
+  editProbId=null;document.getElementById('prob-modal-title').textContent='Add Problem';
+  ['m-pname','m-ptopic','m-plink','m-presource'].forEach(id=>document.getElementById(id).value='');
+  document.getElementById('m-pcat').value='DSA';document.getElementById('m-pdiff').value='Medium';
+  document.getElementById('m-pplatform').value='LeetCode';document.getElementById('m-pstatus').value='Pending';
+  document.getElementById('m-pdate').value=TODAY;document.getElementById('prob-modal').style.display='flex';
+  setTimeout(()=>document.getElementById('m-pname').focus(),50);
+}
+
+function editProblem(id){
+  const p=allProblems.find(x=>x.id===id);if(!p)return;
+  editProbId=id;document.getElementById('prob-modal-title').textContent='Edit Problem';
+  document.getElementById('m-pname').value=p.name;document.getElementById('m-pcat').value=p.category;
+  document.getElementById('m-ptopic').value=p.topic||'';document.getElementById('m-pdiff').value=p.difficulty;
+  document.getElementById('m-pplatform').value=p.platform;document.getElementById('m-plink').value=p.problem_link||'';
+  document.getElementById('m-presource').value=p.resource_link||'';document.getElementById('m-pdate').value=p.scheduled_date||TODAY;
+  document.getElementById('m-pstatus').value=p.status;document.getElementById('prob-modal').style.display='flex';
+}
+
+function closeProbModal(){document.getElementById('prob-modal').style.display='none';}
+
+async function saveProblem(){
+  const name=document.getElementById('m-pname').value.trim();if(!name){toast('Name required');return;}
+  const body={name,category:document.getElementById('m-pcat').value,topic:document.getElementById('m-ptopic').value,
+    difficulty:document.getElementById('m-pdiff').value,platform:document.getElementById('m-pplatform').value,
+    problem_link:document.getElementById('m-plink').value,resource_link:document.getElementById('m-presource').value,
+    scheduled_date:document.getElementById('m-pdate').value,status:document.getElementById('m-pstatus').value};
+  if(editProbId)await api(`/api/problems/${editProbId}`,{method:'PUT',body:JSON.stringify(body)});
+  else await api('/api/problems',{method:'POST',body:JSON.stringify(body)});
+  closeProbModal();toast(editProbId?'Updated!':'Added!');renderProblems();renderHub();
+}
+
+async function openDeleteBatch(){
+  const imports=await api('/api/imports');
+  if(!imports||!imports.length){toast('No import batches found');return;}
+  const opts=imports.map(i=>`${i.filename} — ${i.total_imported} problems (${i.import_date})`).join('\n');
+  const choice=prompt('Type exact filename to delete:\n\n'+opts);if(!choice)return;
+  const batch=imports.find(i=>i.filename===choice);
+  if(!batch){toast('Filename not found');return;}
+  if(!confirm(`Delete all from "${batch.filename}"?`))return;
+  await api('/api/problems/delete-batch',{method:'POST',body:JSON.stringify({batch:batch.filename+'_'+batch.import_date})});
+  toast('Batch deleted');renderProblems();
+}
+
+async function loadTopicsList(){const topics=await api('/api/topics');if(!topics)return;document.getElementById('topics-list').innerHTML=topics.map(t=>`<option value="${t}">`).join('');}
+
+async function loadTopic(){
+  const topic=document.getElementById('topic-input').value.trim();if(!topic){toast('Enter a topic');return;}
+  const data=await api(`/api/topic/${encodeURIComponent(topic)}`);if(!data)return;
+  document.getElementById('topic-result').style.display='block';
+  document.getElementById('topic-title').textContent=`${topic} (${data.solved}/${data.total} solved)`;
+  document.getElementById('topic-problems-list').innerHTML=!data.problems.length
+    ?'<div class="empty"><i class="ti ti-list"></i>No problems for this topic</div>'
+    :data.problems.map(p=>`<div class="problem-row"><div class="prob-info">
+      <div class="prob-name">${p.problem_link?`<a href="${p.problem_link}" target="_blank">${p.name}</a>`:p.name}</div>
+      <div class="prob-meta">${diffB(p.difficulty)} ${statB(p.status)} ${platB(p.platform)}</div>
+    </div></div>`).join('');
+  const resBox=document.getElementById('topic-resources');
+  resBox.innerHTML='<div style="font-size:12px;color:var(--muted)"><span class="spin">↻</span> Loading free resources...</div>';
+  try{
+    const raw=data.ai_resources;
+    const json=JSON.parse(raw.replace(/```json|```/g,'').trim());
+    resBox.innerHTML=`
+      ${json.youtube?`<a href="${json.youtube}" target="_blank" class="btn btn-danger btn-sm" style="margin-bottom:6px;width:100%;justify-content:flex-start"><i class="ti ti-brand-youtube"></i> Free YouTube Tutorial</a>`:''}
+      ${json.article?`<a href="${json.article}" target="_blank" class="btn btn-success btn-sm" style="margin-bottom:6px;width:100%;justify-content:flex-start"><i class="ti ti-article"></i> Free Article / GFG</a>`:''}
+      ${json.practice?`<a href="${json.practice}" target="_blank" class="btn btn-warn btn-sm" style="width:100%;justify-content:flex-start"><i class="ti ti-code"></i> Free Practice Problems</a>`:''}`;
+  }catch(e){resBox.innerHTML=`<div style="font-size:12px;line-height:1.7;color:var(--muted)">${data.ai_resources}</div>`;}
+  if(data.algorithm){
+    document.getElementById('topic-algo-card').style.display='block';
+    document.getElementById('topic-algo-detail').innerHTML=`
+      <div style="font-size:13px;font-weight:600;margin-bottom:4px">${data.algorithm.name}</div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:6px">${data.algorithm.description}</div>
+      <div style="font-size:11.5px;margin-bottom:8px"><strong>Use when:</strong> ${data.algorithm.when_to_use}</div>
+      ${data.algorithm.youtube_link?`<a href="${data.algorithm.youtube_link}" target="_blank" class="btn btn-danger btn-sm"><i class="ti ti-brand-youtube"></i>Video</a>`:''}`;
+  }
+}
+
+async function renderAlgorithms(){
+  const algos=await api('/api/algorithms');if(!algos)return;
+  const masteries=['Not Started','Learning','Practiced','Mastered'];
+  document.getElementById('algo-grid').innerHTML=algos.map(a=>`
+    <div class="algo-card">
+      <div style="display:flex;justify-content:space-between;margin-bottom:5px">
+        <div style="font-size:13.5px;font-weight:600">${a.name}</div>
+        <span class="badge b-dsa">${a.pattern}</span>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:5px;line-height:1.5">${a.description}</div>
+      <div style="font-size:11.5px;margin-bottom:9px"><strong>Use when:</strong> ${a.when_to_use}</div>
+      <div style="display:flex;gap:4px;margin-bottom:8px;flex-wrap:wrap">
+        ${masteries.map(m=>`<button class="mastery-btn ${a.mastery===m?'am':''}" onclick="setMastery(${a.id},'${m}',this)">${m}</button>`).join('')}
+      </div>
+      <div style="display:flex;gap:5px">
+        ${a.youtube_link?`<a href="${a.youtube_link}" target="_blank" class="btn btn-danger btn-sm"><i class="ti ti-brand-youtube"></i>Video</a>`:''}
+        ${a.article_link?`<a href="${a.article_link}" target="_blank" class="btn btn-success btn-sm"><i class="ti ti-external-link"></i>Practice</a>`:''}
+      </div>
+    </div>`).join('');
+}
+
+async function setMastery(id,mastery,el){
+  await api(`/api/algorithms/${id}`,{method:'PUT',body:JSON.stringify({mastery})});
+  el.closest('.algo-card').querySelectorAll('.mastery-btn').forEach(b=>b.classList.remove('am'));
+  el.classList.add('am');toast('Mastery: '+mastery);
+}
+
+async function renderProjects(){
+  const projects=await api('/api/projects');if(!projects)return;
+  const list=document.getElementById('projects-list');
+  if(!projects.length){list.innerHTML='<div class="empty"><i class="ti ti-code"></i>No projects yet. Add your first!</div>';return;}
+  list.innerHTML=projects.map(p=>`<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+      <div>
+        <div style="font-size:15px;font-weight:600">${p.name}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:2px">${p.description}</div>
+        <div style="margin-top:6px;display:flex;gap:4px;flex-wrap:wrap">${p.tech_stack.split(',').map(t=>`<span class="badge b-dsa">${t.trim()}</span>`).join('')}</div>
+      </div>
+      <div style="text-align:right">
+        <div style="font-size:22px;font-weight:700;color:var(--accent)">${p.completion_pct}%</div>
+        <div style="font-size:11px;color:var(--muted)">${p.milestone_done}/${p.milestone_total} milestones</div>
+        ${p.github_link?`<a href="${p.github_link}" target="_blank" class="btn btn-ghost btn-sm" style="margin-top:5px"><i class="ti ti-brand-github"></i>GitHub</a>`:''}
+      </div>
+    </div>
+    <div class="progress-bar"><div class="progress-fill" style="width:${p.completion_pct}%"></div></div>
+    <div id="ms-${p.id}"><div style="font-size:12px;color:var(--muted);margin-top:8px">Loading...</div></div>
+    <button class="btn btn-ghost btn-sm" style="margin-top:10px" onclick="addMilestone(${p.id})"><i class="ti ti-plus"></i>Add Milestone</button>
+  </div>`).join('');
+  projects.forEach(p=>loadMilestones(p.id));
+}
+
+async function loadMilestones(pid){
+  const ms=await api(`/api/projects/${pid}/milestones`);if(!ms)return;
+  const el=document.getElementById('ms-'+pid);
+  if(!ms.length){el.innerHTML='<div style="font-size:12px;color:var(--muted);margin-top:8px">No milestones yet.</div>';return;}
+  el.innerHTML='<div style="margin-top:8px">'+ms.map(m=>`
+    <div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:.5px solid var(--border)">
+      <div style="width:13px;height:13px;border-radius:50%;border:2px solid ${m.status==='Done'?'var(--success)':'var(--border)'};background:${m.status==='Done'?'var(--success)':'transparent'};flex-shrink:0"></div>
+      <div style="flex:1;font-size:12.5px;font-weight:500;${m.status==='Done'?'text-decoration:line-through;color:var(--muted)':''}">${m.name}</div>
+      ${m.deadline?`<div style="font-size:11px;color:var(--muted)">${fmtDate(m.deadline)}</div>`:''}
+      <select style="font-size:11px;border:.5px solid var(--border);border-radius:5px;padding:2px 5px;background:var(--bg);color:var(--text);font-family:inherit" onchange="updateMilestone(${m.id},this.value)">
+        <option ${m.status==='Pending'?'selected':''}>Pending</option>
+        <option ${m.status==='In Progress'?'selected':''}>In Progress</option>
+        <option ${m.status==='Done'?'selected':''}>Done</option>
+      </select>
+    </div>`).join('')+'</div>';
+}
+
+function openAddProject(){document.getElementById('proj-modal').style.display='flex';}
+
+async function saveProject(){
+  const name=document.getElementById('m-proj-name').value.trim();if(!name){toast('Name required');return;}
+  await api('/api/projects',{method:'POST',body:JSON.stringify({name,description:document.getElementById('m-proj-desc').value,tech_stack:document.getElementById('m-proj-tech').value,target_date:document.getElementById('m-proj-date').value,github_link:document.getElementById('m-proj-git').value})});
+  document.getElementById('proj-modal').style.display='none';toast('Project added!');renderProjects();
+}
+
+async function addMilestone(pid){
+  const name=prompt('Milestone name:');if(!name)return;
+  const deadline=prompt('Deadline (YYYY-MM-DD):','')||'';
+  await api(`/api/projects/${pid}/milestones`,{method:'POST',body:JSON.stringify({name,deadline,order_index:0})});
+  toast('Milestone added!');loadMilestones(pid);
+}
+
+async function updateMilestone(id,status){await api(`/api/milestones/${id}`,{method:'PUT',body:JSON.stringify({status})});toast('Updated');renderProjects();}
+
+async function renderProgress(){
+  const data=await api('/api/stats');if(!data)return;
+  document.getElementById('pr-days').textContent=data.days_left;
+  document.getElementById('pr-pace').textContent='Need '+data.needed_per_day+' problems/day to finish';
+  document.getElementById('pr-solved').textContent=data.solved;
+  document.getElementById('pr-rate').textContent=data.total?Math.round(data.solved/data.total*100)+'%':'0%';
+  document.getElementById('pr-streak').textContent=data.streak+'🔥';
+  document.getElementById('pr-need').textContent=data.needed_per_day+'/day';
+  document.getElementById('pr-skipped').textContent=data.skipped;
+  const pct=data.readiness;
+  document.getElementById('pr-readiness').textContent=pct+'%';
+  document.getElementById('readiness-circle').style.strokeDashoffset=175.9*(1-pct/100);
+  document.getElementById('pr-readiness-label').textContent=pct>=70?'🟢 Looking good!':pct>=40?'🟡 Needs work':'🔴 Focus needed';
+  const maxV=Math.max(...data.daily_data.map(d=>Math.max(d.solved,d.target)),1);
+  document.getElementById('pr-chart').innerHTML=data.daily_data.map(d=>`
+    <div class="chart-col">
+      <div style="display:flex;flex-direction:column-reverse;height:72px;width:100%;gap:1px">
+        <div class="chart-bar bar-target" style="height:${Math.round(d.target/maxV*72)}px"></div>
+        <div class="chart-bar bar-solved" style="height:${Math.round(d.solved/maxV*72)}px"></div>
+      </div>
+    </div>`).join('');
+  document.getElementById('pr-cats').innerHTML=data.categories.map(c=>{
+    const pct=c.total?Math.round(c.solved/c.total*100):0;
+    return`<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;margin-bottom:3px">${catB(c.category)}<span style="font-size:11.5px;color:var(--muted)">${c.solved}/${c.total}</span></div>
+      <div class="progress-bar" style="margin:0"><div class="progress-fill ${pct>=70?'green':pct>=30?'':'orange'}" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('')||'<div class="empty"><i class="ti ti-chart-bar"></i>No data yet</div>';
+  document.getElementById('pr-ai-report').textContent=data.weekly_ai_report;
+}
+
+async function renderCoach(){
+  const data=await api('/api/dashboard');
+  if(data&&data.ai_briefing){document.getElementById('coach-daily').textContent=data.ai_briefing;document.getElementById('coach-model').textContent='· '+data.ai_model;}
+}
+
+async function sendChat(){
+  const input=document.getElementById('chat-input');const msg=input.value.trim();if(!msg)return;
+  input.value='';appendChat(msg,'user');appendChat('Thinking...','ai');
+  const data=await api('/api/ai/chat',{method:'POST',body:JSON.stringify({message:msg})});
+  document.getElementById('chat-msgs').lastChild.remove();
+  if(data)appendChat(data.response,'ai');
+}
+
+function quickChat(msg){document.getElementById('chat-input').value=msg;sendChat();}
+
+function appendChat(text,role){
+  const msgs=document.getElementById('chat-msgs');
+  const div=document.createElement('div');div.className='chat-msg '+role;div.textContent=text;
+  msgs.appendChild(div);msgs.scrollTop=msgs.scrollHeight;
+}
+
+function onFileSelect(input){if(input.files[0])uploadFile(input.files[0]);}
+function onDrop(e){e.preventDefault();document.getElementById('dropzone').classList.remove('drag');if(e.dataTransfer.files[0])uploadFile(e.dataTransfer.files[0]);}
+
+async function uploadFile(file){
+  toast('Parsing '+file.name+'...');
+  const fd=new FormData();fd.append('file',file);
+  try{
+    const r=await fetch('/api/upload',{method:'POST',body:fd});const data=await r.json();
+    if(data.error){toast('Error: '+data.error);return;}
+    pendingImport=data.tasks;
+    document.getElementById('preview-card').style.display='block';
+    document.getElementById('preview-title').textContent=`Preview — ${data.count} problems in "${data.filename}"`;
+    document.getElementById('preview-body').innerHTML=`
+      <div class="ai-box" style="margin-bottom:10px">
+        <div class="ai-icon"><i class="ti ti-robot"></i></div>
+        <div class="ai-text"><strong>AI parsed:</strong> ${data.sheets.join(', ')} sheet(s). ${data.tasks.filter(t=>t.category==='DSA').length} DSA · ${data.tasks.filter(t=>t.category==='Aptitude').length} Aptitude · ${data.tasks.filter(t=>t.category==='Verbal').length} Verbal · ${data.tasks.filter(t=>t.category==='Interview').length} Interview problems detected.</div>
+      </div>
+      ${data.overload_dates.length?`<div style="background:#fffbeb;border:.5px solid #fde68a;border-radius:8px;padding:10px 14px;margin-bottom:10px;font-size:12px;color:#78350f">⚠️ <strong>Overload</strong> on ${data.overload_dates.join(', ')} — more tasks than your daily goal</div>`:''}
+      <table class="table"><thead><tr><th>Problem</th><th>Topic</th><th>Category</th><th>Difficulty</th><th>Date</th><th>Link</th></tr></thead>
+      <tbody>${data.tasks.slice(0,20).map(t=>`<tr>
+        <td>${t.name}</td><td>${t.topic||'—'}</td><td>${catB(t.category)}</td><td>${diffB(t.difficulty)}</td>
+        <td>${t.scheduled_date?fmtDate(t.scheduled_date):'—'}</td>
+        <td>${t.problem_link?`<a href="${t.problem_link}" target="_blank" style="color:var(--accent);font-size:11px">Link</a>`:''}</td>
+      </tr>`).join('')}</tbody></table>
+      ${data.count>20?`<div style="font-size:12px;color:var(--muted);margin-top:8px">...and ${data.count-20} more</div>`:''}`;
+    toast('Parsed! Review and import.');
+  }catch(e){toast('Upload failed — check server');}
+}
+
+async function confirmImport(){
+  const mode=document.querySelector('input[name="imode"]:checked')?.value||'add';
+  const btn=document.getElementById('import-btn');btn.disabled=true;btn.innerHTML='<span class="spin">↻</span> Importing...';
+  const filename=document.getElementById('file-in').files[0]?.name||'upload';
+  const r=await api('/api/import',{method:'POST',body:JSON.stringify({tasks:pendingImport,mode,filename})});
+  btn.disabled=false;btn.innerHTML='<i class="ti ti-check"></i>Import All';
+  if(!r)return;pendingImport=[];document.getElementById('preview-card').style.display='none';
+  toast(`Imported ${r.imported} problems!${r.skipped?' ('+r.skipped+' duplicates skipped)':''}`);
+  loadImportHistory();nav('hub',document.querySelector('.nav-item'));document.querySelector('.nav-item').classList.add('active');
+}
+
+function cancelImport(){pendingImport=[];document.getElementById('preview-card').style.display='none';}
+
+async function loadImportHistory(){
+  const imports=await api('/api/imports');const el=document.getElementById('import-history');
+  if(!imports||!imports.length){el.innerHTML='<div class="empty"><i class="ti ti-history"></i>No imports yet</div>';return;}
+  el.innerHTML=`<table class="table"><thead><tr><th>File</th><th>Date</th><th>Problems</th></tr></thead><tbody>
+    ${imports.map(i=>`<tr><td style="font-size:12.5px">${i.filename}</td><td>${fmtDate(i.import_date)}</td><td>${i.total_imported}</td></tr>`).join('')}
+  </tbody></table>`;
+}
+
+async function saveSettings(){
+  const data={name:document.getElementById('set-name').value||'Student',daily_goal:document.getElementById('set-goal').value||'10',study_hours:document.getElementById('set-hours').value||'4',placement_deadline:document.getElementById('set-deadline').value||'2026-10-01',target_companies:document.getElementById('set-companies').value,groq_api_key:document.getElementById('set-groq').value,gemini_api_key:document.getElementById('set-gemini').value,openrouter_api_key:document.getElementById('set-openrouter').value,ai_provider:document.getElementById('set-ai-provider').value,dark_mode:document.body.classList.contains('dark')?'true':'false'};
+  await api('/api/settings',{method:'POST',body:JSON.stringify(data)});
+  settings={...settings,...data};applySettings();toast('Settings saved!');
+}
+
+async function clearAll(){if(!confirm('Delete ALL problems? Cannot be undone.'))return;await api('/api/problems/clear',{method:'DELETE'});toast('Cleared');renderProblems();renderHub();}
+
+function toggleDark(){document.body.classList.toggle('dark');document.getElementById('tog-dark').classList.toggle('on');}
+
+function switchTab(el,show){
+  el.closest('.tabs').querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));el.classList.add('active');
+  ['fmt-dsa','fmt-apti','fmt-verbal'].forEach(id=>document.getElementById(id).style.display=id===show?'block':'none');
+}
+
+let toastTimer;
+function toast(msg){const el=document.getElementById('toast');el.innerHTML=`<i class="ti ti-check" style="color:#a5b4fc"></i>${msg}`;el.className='toast';el.style.display='flex';clearTimeout(toastTimer);toastTimer=setTimeout(()=>el.style.display='none',2800);}
+
+document.addEventListener('keydown',e=>{
+  if(e.key==='Escape'){closeProbModal();document.getElementById('proj-modal').style.display='none';}
+  if(e.ctrlKey&&e.key==='n'){e.preventDefault();openAddProblem();}
+});
+
+init();
+</script>
+</body>
+</html>
