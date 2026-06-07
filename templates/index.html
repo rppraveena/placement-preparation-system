@@ -396,7 +396,12 @@ body.dark .streak-box{background:linear-gradient(135deg,#3d2c05,#4a3608)}
         <div class="set-row"><div style="font-weight:500">Dark Mode</div><div class="toggle" id="tog-dark" onclick="toggleDark()"></div></div>
         <div class="set-row"><div style="font-weight:500">Auto-miss overdue problems</div><div class="toggle on" id="tog-miss" onclick="this.classList.toggle('on')"></div></div>
       </div>
-      <div class="card"><div class="card-title">Danger Zone</div><button class="btn btn-danger" onclick="clearAll()"><i class="ti ti-trash"></i>Clear All Problems</button></div>
+      <div class="card"><div class="card-title">Danger Zone</div>
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <button class="btn btn-danger" onclick="clearAll()"><i class="ti ti-trash"></i>Clear All Problems</button>
+          <button class="btn btn-warn" onclick="clearExcelData()"><i class="ti ti-file-x"></i>Clear Excel &amp; Re-upload</button>
+        </div>
+      </div>
     </div>
     <div class="card">
       <div class="card-title">AI API Keys <span style="font-size:11px;color:var(--muted);font-weight:400">(saved locally in your DB)</span></div>
@@ -528,13 +533,22 @@ async function renderHub(){
   document.getElementById('hub-days-left').textContent=s.days_left+' days to placement';
   document.getElementById('today-prog').style.width=s.today_pct+'%';
   document.getElementById('today-lbl').textContent=s.today_solved+'/'+s.today_target+' done today';
-  const wk=data.weekly,wpct=wk.target_problems?Math.round(wk.done_problems/wk.target_problems*100):0;
-  document.getElementById('week-prog').style.width=wpct+'%';
-  document.getElementById('week-count').textContent=wk.done_problems+'/'+wk.target_problems;
+  // Week: target = problems assigned this week (scheduled_date falls in current Mon–Sun)
+  const wk=data.weekly;
+  const wkAssigned=wk.assigned_problems||wk.target_problems||0;
+  const wkDone=wk.done_problems||0;
+  const wpct=wkAssigned?Math.round(wkDone/wkAssigned*100):0;
+  document.getElementById('week-prog').style.width=Math.min(wpct,100)+'%';
+  document.getElementById('week-count').textContent=wkDone+'/'+wkAssigned;
   document.getElementById('week-status').textContent=wpct>=100?'✅ Weekly goal achieved!':wpct>=50?'On track — keep going 💪':'Behind — push harder 🎯';
-  const mo=data.monthly,mpct=mo.target_problems?Math.round(mo.done_problems/mo.target_problems*100):0;
-  document.getElementById('month-prog').style.width=mpct+'%';
-  document.getElementById('month-count').textContent=mo.done_problems+'/'+mo.target_problems;
+
+  // Month: target = problems assigned this month (scheduled_date in current calendar month)
+  const mo=data.monthly;
+  const moAssigned=mo.assigned_problems||mo.target_problems||0;
+  const moDone=mo.done_problems||0;
+  const mpct=moAssigned?Math.round(moDone/moAssigned*100):0;
+  document.getElementById('month-prog').style.width=Math.min(mpct,100)+'%';
+  document.getElementById('month-count').textContent=moDone+'/'+moAssigned;
   document.getElementById('month-status').textContent=mpct+'% of monthly goal';
   renderPlan(data.today_plan,s.today_target);
   if(data.ai_briefing){document.getElementById('ai-briefing-text').textContent=data.ai_briefing;document.getElementById('ai-model-tag').textContent='AI BRIEFING · '+data.ai_model.toUpperCase();}
@@ -556,7 +570,10 @@ function renderPlan(plan,target){
         <div class="prob-meta">
           ${catB(p.category)} ${diffB(p.difficulty)}
           ${p.topic?`<span style="font-size:11px;color:var(--muted)">${p.topic}</span>`:''}
-          ${p.resource_link?`<a href="${p.resource_link}" target="_blank" style="font-size:11px;color:var(--accent)"><i class="ti ti-link"></i> Resource</a>`:''}
+        </div>
+        <div class="prob-meta" style="margin-top:5px;gap:6px">
+          ${p.problem_link?`<a href="${p.problem_link}" target="_blank" class="btn btn-warn btn-sm" style="font-size:11px;padding:3px 9px"><i class="ti ti-external-link"></i> ${p.platform||'Problem'}</a>`:''}
+          ${p.resource_link?`<a href="${p.resource_link}" target="_blank" class="btn btn-ghost btn-sm" style="font-size:11px;padding:3px 9px"><i class="ti ti-link"></i> Resource</a>`:''}
         </div>
       </div>
     </div>`).join('');
@@ -593,9 +610,32 @@ async function updateStatus(id,cur,el,event){
   document.getElementById('today-prog').style.width=pct+'%';
   document.getElementById('today-lbl').textContent=solvedCount+'/'+target+' done today';
 
-  // 5. Save to DB in background
-  await api(`/api/problems/${id}`,{method:'PUT',body:JSON.stringify({status:next})});
-  toast((event&&event.button===2?'◀ ':'▶ ')+next);
+  // 5. This Week + Month instant update (only Solved counts)
+  const wasSolved=cur==='Solved',nowSolved=next==='Solved';
+  const delta=nowSolved?1:wasSolved?-1:0;
+  if(delta!==0){
+    const wkEl=document.getElementById('week-count');
+    if(wkEl){
+      const wp=wkEl.textContent.split('/');
+      const wd=Math.max(0,(parseInt(wp[0])||0)+delta),wt=parseInt(wp[1])||0;
+      wkEl.textContent=wd+'/'+wt;
+      const wpct=Math.round(wd/wt*100);
+      document.getElementById('week-prog').style.width=wpct+'%';
+      document.getElementById('week-status').textContent=wpct>=100?'Weekly goal achieved!':wpct>=50?'On track - keep going':'Behind - push harder';
+    }
+    const moEl=document.getElementById('month-count');
+    if(moEl){
+      const mp=moEl.textContent.split('/');
+      const md=Math.max(0,(parseInt(mp[0])||0)+delta),mt=parseInt(mp[1])||0;
+      moEl.textContent=md+'/'+mt;
+      const mpct=Math.round(md/mt*100);
+      document.getElementById('month-prog').style.width=mpct+'%';
+      document.getElementById('month-status').textContent=mpct+'% of monthly goal';
+    }
+  }
+  // 6. Save to DB in background
+  await api('/api/problems/'+id,{method:'PUT',body:JSON.stringify({status:next})});
+  toast((event&&event.button===2?'< ':'> ')+next);
 }
 
 async function refreshBriefing(){
@@ -621,8 +661,8 @@ async function renderProblems(){
     <td>${p.topic||'—'}</td><td>${diffB(p.difficulty)}</td><td>${platB(p.platform)}</td>
     <td><span class="badge b-${p.status.toLowerCase()}" style="cursor:pointer" onclick="cycleProb(${p.id})" title="Click to cycle">${p.status}</span></td>
     <td><div style="display:flex;gap:4px">
-      ${p.problem_link?`<a href="${p.problem_link}" target="_blank" class="btn btn-ghost btn-sm"><i class="ti ti-external-link"></i></a>`:''}
-      ${p.resource_link?`<a href="${p.resource_link}" target="_blank" class="btn btn-warn btn-sm"><i class="ti ti-link"></i></a>`:''}
+      ${p.problem_link?`<a href="${p.problem_link}" target="_blank" class="btn btn-warn btn-sm"><i class="ti ti-external-link"></i> ${p.platform||'Link'}</a>`:`<span style="font-size:11px;color:var(--muted)">No link</span>`}
+      ${p.resource_link?`<a href="${p.resource_link}" target="_blank" class="btn btn-ghost btn-sm"><i class="ti ti-link"></i> Resource</a>`:''}
     </div></td>
     <td><div style="display:flex;gap:2px">
       <button class="icon-btn" onclick="editProblem(${p.id})"><i class="ti ti-edit"></i></button>
@@ -912,6 +952,24 @@ async function saveSettings(){
 }
 
 async function clearAll(){if(!confirm('Delete ALL problems? Cannot be undone.'))return;await api('/api/problems/clear',{method:'DELETE'});toast('Cleared');renderProblems();renderHub();}
+
+async function clearExcelData(){
+  if(!confirm('This will delete all import history and reset the upload area. Problems already imported will remain. Continue?'))return;
+  // Clear import history on backend
+  await api('/api/imports/clear',{method:'DELETE'});
+  // Reset the file input so a new file can be selected
+  const fileIn=document.getElementById('file-in');
+  fileIn.value='';
+  // Hide preview card
+  pendingImport=[];
+  document.getElementById('preview-card').style.display='none';
+  // Reload import history
+  loadImportHistory();
+  // Navigate to Upload page
+  const uploadNav=document.querySelector('.nav-item[onclick*="upload"]');
+  nav('upload',uploadNav);
+  toast('Excel cleared — upload a new file!');
+}
 
 function toggleDark(){document.body.classList.toggle('dark');document.getElementById('tog-dark').classList.toggle('on');}
 
