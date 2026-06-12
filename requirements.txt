@@ -5,3 +5,5 @@ openpyxl
 groq
 google-generativeai
 requests
+feedparser
+duckduckgo-search
