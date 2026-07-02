@@ -72,7 +72,6 @@ def search_web_for_resources(topic, max_results=4):
 
     return urls[:max_results]
 
-
 # ─── EXCEL COLUMN MAPPING ─────────────────────────────────────────────────────
 def map_excel_columns(columns):
     cols_lower = {c.lower().strip(): c for c in columns}
@@ -251,7 +250,6 @@ def smart_parse_sheet(df, sheet_name):
         })
     return rows_out
 
-
 # ─── NEWS (placement + tech/AI, daily cached) ─────────────────────────────────
 PLACEMENT_KEYWORDS = [
     'placement', 'interview', 'hiring', 'internship', 'job', 'career', 'campus',
@@ -302,7 +300,6 @@ def fetch_tech_news(limit=9):
 
     articles = []
 
-    # Source 1: Hacker News top stories (only placement/tech relevant)
     try:
         hn_ids = requests.get('https://hacker-news.firebaseio.com/v1/topstories.json', timeout=6).json()
         if hn_ids and isinstance(hn_ids, list):
@@ -326,7 +323,6 @@ def fetch_tech_news(limit=9):
     except Exception as e:
         print(f"HN error: {e}")
 
-    # Source 2: Dev.to placement/tech articles
     try:
         for tag in ['career', 'programming', 'python', 'ai', 'javascript']:
             resp = requests.get(f'https://dev.to/api/articles?tag={tag}&per_page=5&top=1',
@@ -347,7 +343,6 @@ def fetch_tech_news(limit=9):
     except Exception as e:
         print(f"Dev.to error: {e}")
 
-    # Source 3: The Verge AI feed
     try:
         import feedparser
         feed = feedparser.parse('https://www.theverge.com/rss/ai-artificial-intelligence/index.xml')
@@ -359,7 +354,6 @@ def fetch_tech_news(limit=9):
     except Exception as e:
         print(f"The Verge error: {e}")
 
-    # Source 4: GitHub Trending via RSS
     try:
         import feedparser
         feed = feedparser.parse('https://github.com/trending.rss')
@@ -371,7 +365,6 @@ def fetch_tech_news(limit=9):
     except Exception as e:
         print(f"GitHub RSS error: {e}")
 
-    # Source 5: GeeksForGeeks jobs/placement RSS
     try:
         import feedparser
         gfg = feedparser.parse('https://www.geeksforgeeks.org/feed/')
@@ -383,7 +376,6 @@ def fetch_tech_news(limit=9):
     except Exception as e:
         print(f"GFG RSS error: {e}")
 
-    # Deduplicate
     seen = set()
     unique = []
     for a in articles:
@@ -417,34 +409,34 @@ def fetch_tech_news(limit=9):
 
     return result
 
-
 # ─── RAG: USER STATUS CONTEXT ────────────────────────────────────────────────
-def get_user_status_context():
+def get_user_status_context(user_id):
     try:
         with get_db() as db:
-            settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings").fetchall()}
-            total     = db.execute("SELECT COUNT(*) as c FROM problems").fetchone()['c']
-            solved    = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Solved'").fetchone()['c']
-            pending   = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Pending'").fetchone()['c']
-            skipped   = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Skipped'").fetchone()['c']
-            attempted = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Attempted'").fetchone()['c']
+            settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings WHERE user_id=?", (user_id,)).fetchall()}
+            total     = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=?", (user_id,)).fetchone()['c']
+            solved    = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=? AND status='Solved'", (user_id,)).fetchone()['c']
+            pending   = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=? AND status='Pending'", (user_id,)).fetchone()['c']
+            skipped   = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=? AND status='Skipped'", (user_id,)).fetchone()['c']
+            attempted = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=? AND status='Attempted'", (user_id,)).fetchone()['c']
 
             cats = db.execute(
-                "SELECT category, COUNT(*) as total, SUM(CASE WHEN status='Solved' THEN 1 ELSE 0 END) as solved FROM problems GROUP BY category"
+                "SELECT category, COUNT(*) as total, SUM(CASE WHEN status='Solved' THEN 1 ELSE 0 END) as solved FROM problems WHERE user_id=? GROUP BY category",
+                (user_id,)
             ).fetchall()
             cat_breakdown = ", ".join([f"{c['category']}: {c['solved']}/{c['total']}" for c in cats]) or "None"
 
             streak = 0
             check = date.today() - timedelta(days=1)
             for _ in range(365):
-                log = db.execute("SELECT problems_solved FROM daily_log WHERE log_date=?", (check.isoformat(),)).fetchone()
+                log = db.execute("SELECT problems_solved FROM daily_log WHERE user_id=? AND log_date=?", (user_id, check.isoformat())).fetchone()
                 if not log or log['problems_solved'] < 1:
                     break
                 streak += 1
                 check -= timedelta(days=1)
 
             today = date.today().isoformat()
-            today_log = db.execute("SELECT * FROM daily_log WHERE log_date=?", (today,)).fetchone()
+            today_log = db.execute("SELECT * FROM daily_log WHERE user_id=? AND log_date=?", (user_id, today)).fetchone()
             solved_today = today_log['problems_solved'] if today_log else 0
 
             solved_pct = round(solved / total * 100) if total else 0
@@ -461,8 +453,8 @@ def get_user_status_context():
             plan_rows = db.execute('''
                 SELECT p.name, p.category, p.difficulty, p.platform, dp.status
                 FROM daily_plan dp JOIN problems p ON dp.problem_id = p.id
-                WHERE dp.plan_date = ? ORDER BY dp.order_index
-            ''', (today,)).fetchall()
+                WHERE dp.user_id=? AND dp.plan_date = ? ORDER BY dp.order_index
+            ''', (user_id, today)).fetchall()
 
             plan_str = "\n".join([
                 f"  {i+1}. {r['name']} [{r['category']} - {r['difficulty']}] on {r['platform']} — {r['status']}"
@@ -493,19 +485,16 @@ Today's Plan:
     except Exception as e:
         return f"[USER CURRENT STATUS — Could not load: {e}]"
 
-
 # ─── API KEY HELPER ───────────────────────────────────────────────────────────
-def get_keys():
+def get_keys(user_id):
     try:
         with get_db() as db:
-            rows = db.execute("SELECT key,value FROM settings WHERE key LIKE '%api_key%' OR key='ai_provider'").fetchall()
+            rows = db.execute("SELECT key,value FROM settings WHERE user_id=? AND (key LIKE '%api_key%' OR key='ai_provider')", (user_id,)).fetchall()
         return {r['key']: r['value'] for r in rows}
     except Exception:
         return {}
 
-
 # ─── SMART CONTEXT DETECTION ─────────────────────────────────────────────────
-# Words that mean the user is asking about THEMSELVES / their own data
 _PERSONAL_SIGNALS = [
     'my progress', 'my plan', 'my data', 'my status', 'my streak', 'my score',
     'my weak', 'my strong', 'my performance', 'my problems', 'my solved',
@@ -520,18 +509,15 @@ _PERSONAL_SIGNALS = [
 ]
 
 def _needs_personal_context(user_message: str) -> bool:
-    """Return True only if the user is asking about their own data."""
     low = user_message.lower()
     return any(signal in low for signal in _PERSONAL_SIGNALS)
 
-
-# ─── MAIN AI CALL (smart RAG + WEB SEARCH) ────────────────────────────────────
-def ask_ai(prompt, system=None):
-    user_query = prompt  # keep original for signal detection
+# ─── MAIN AI CALL ─────────────────────────────────────────────────────────────
+def ask_ai(prompt, system=None, user_id=None):
+    user_query = prompt
 
     if system is None:
-        if _needs_personal_context(user_query):
-            # ── PERSONAL mode: inject RAG context, act as placement coach ──
+        if _needs_personal_context(user_query) and user_id:
             system = """You are an elite, brutally honest placement coach for a CSE student targeting 2026 placements.
 
 The [USER CURRENT STATUS] block below contains the student's LIVE data from their tracker. You MUST:
@@ -542,13 +528,9 @@ The [USER CURRENT STATUS] block below contains the student's LIVE data from thei
 5. Be direct, honest, motivating. Under 350 words.
 
 Tone: Mentor, not cheerleader. Use their real data to drive every point."""
-
-            if "[USER CURRENT STATUS" not in prompt:
-                status_context = get_user_status_context()
-                prompt = f"{status_context}\n\n---\n**USER QUERY:**\n{user_query}"
-
+            status_context = get_user_status_context(user_id)
+            prompt = f"{status_context}\n\n---\n**USER QUERY:**\n{user_query}"
         else:
-            # ── GENERAL mode: act like ChatGPT/Claude for CS questions ──
             system = """You are an expert computer science teacher and placement mentor. You know DSA, system design, SQL, OOPs, aptitude, core CS subjects, and interview preparation deeply.
 
 Answer the user's question clearly and helpfully — like a senior engineer or professor would. Rules:
@@ -560,12 +542,10 @@ Answer the user's question clearly and helpfully — like a senior engineer or p
 
 Tone: Knowledgeable, clear, friendly. Like the best Stack Overflow answer + a senior mentor."""
 
-    # Inject online resources if the query is asking for links/tutorials
     resource_keywords = ['resource', 'tutorial', 'video', 'article', 'practice', 'learn',
                          'how to', 'study', 'material', 'give me', 'explain', 'teach',
                          'where to', 'link', 'reference', 'website', 'site']
     if any(kw in user_query.lower() for kw in resource_keywords):
-        # Use only the user's actual question as the search topic
         words = user_query.split()
         topic = ' '.join(words[:12]) if len(words) > 12 else user_query
         fetched_urls = search_web_for_resources(topic, max_results=4)
@@ -573,7 +553,10 @@ Tone: Knowledgeable, clear, friendly. Like the best Stack Overflow answer + a se
             url_block = "\n".join([f"- {url}" for url in fetched_urls])
             prompt += f"\n\n[ONLINE RESOURCES — include these links in your answer]:\n{url_block}"
 
-    keys = get_keys()
+    if user_id is None:
+        keys = {}
+    else:
+        keys = get_keys(user_id)
     provider = keys.get('ai_provider', 'groq')
 
     order = []
@@ -621,7 +604,6 @@ Tone: Knowledgeable, clear, friendly. Like the best Stack Overflow answer + a se
 
     return rule_based_feedback(prompt), "rule-based"
 
-
 # ─── RULE-BASED FALLBACK ──────────────────────────────────────────────────────
 def rule_based_feedback(prompt):
     pl = prompt.lower()
@@ -645,17 +627,17 @@ def generate_news_response():
 def generate_daily_rule_feedback():
     today = date.today().isoformat()
     with get_db() as db:
-        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings").fetchall()}
-        today_log = db.execute("SELECT * FROM daily_log WHERE log_date=?", (today,)).fetchone()
-        pending_count = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Pending'").fetchone()['c']
-        solved_count  = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Solved'").fetchone()['c']
+        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings WHERE user_id=1").fetchall()}
+        today_log = db.execute("SELECT * FROM daily_log WHERE user_id=1 AND log_date=?", (today,)).fetchone()
+        pending_count = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=1 AND status='Pending'").fetchone()['c']
+        solved_count  = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=1 AND status='Solved'").fetchone()['c']
         goal = int(settings.get('daily_goal', 10))
         deadline = settings.get('placement_deadline', '2026-10-01')
         days_left = (date.fromisoformat(deadline) - date.today()).days
         plan_rows = db.execute('''
             SELECT p.name, p.category, p.difficulty, dp.status
             FROM daily_plan dp JOIN problems p ON dp.problem_id = p.id
-            WHERE dp.plan_date = ? ORDER BY dp.order_index
+            WHERE dp.user_id=1 AND dp.plan_date = ? ORDER BY dp.order_index
         ''', (today,)).fetchall()
 
     solved_today = today_log['problems_solved'] if today_log else 0
@@ -666,11 +648,11 @@ def generate_daily_rule_feedback():
 ### Reality Check
 """
     if solved_today == 0:
-        out += f"🚨 You have solved **0/{goal}** problems today. Every hour you delay costs you. Start now.\n"
+        out += " You have solved **0/{goal}** problems today. Every hour you delay costs you. Start now.\n"
     elif solved_today < goal:
-        out += f"⚠️ **{solved_today}/{goal}** done. You need **{goal - solved_today}** more to hit your daily goal.\n"
+        out += f" **{solved_today}/{goal}** done. You need **{goal - solved_today}** more to hit your daily goal.\n"
     else:
-        out += f"🏆 Daily goal of {goal} achieved! Strong consistency builds placements.\n"
+        out += f" Daily goal of {goal} achieved! Strong consistency builds placements.\n"
 
     out += "\n### Today's Tasks\n"
     if plan_rows:
@@ -686,10 +668,10 @@ def generate_daily_rule_feedback():
 def generate_weekly_rule_feedback():
     week_start = (date.today() - timedelta(days=date.today().weekday())).isoformat()
     with get_db() as db:
-        logs = db.execute("SELECT * FROM daily_log WHERE log_date >= ?", (week_start,)).fetchall()
-        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings").fetchall()}
-        total_p = db.execute("SELECT COUNT(*) as c FROM problems").fetchone()['c']
-        solved_p = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Solved'").fetchone()['c']
+        logs = db.execute("SELECT * FROM daily_log WHERE user_id=1 AND log_date >= ?", (week_start,)).fetchall()
+        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings WHERE user_id=1").fetchall()}
+        total_p = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=1").fetchone()['c']
+        solved_p = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=1 AND status='Solved'").fetchone()['c']
     total_solved = sum(l['problems_solved'] for l in logs)
     goal = int(settings.get('daily_goal', 10)) * 7
     days_studied = len([l for l in logs if l['problems_solved'] > 0])
@@ -698,28 +680,28 @@ def generate_weekly_rule_feedback():
 
 ### Reality Check\n"""
     if days_studied < 5:
-        out += f"⚠️ Only {days_studied}/7 days studied. Aim for 6 minimum.\n"
+        out += f" Only {days_studied}/7 days studied. Aim for 6 minimum.\n"
     else:
-        out += f"✅ Good consistency — {days_studied}/7 days studied.\n"
+        out += f" Good consistency — {days_studied}/7 days studied.\n"
     if total_solved < goal * 0.5:
-        out += f"❌ Behind target: {total_solved}/{goal}. Increase volume.\n"
+        out += f" Behind target: {total_solved}/{goal}. Increase volume.\n"
     elif total_solved >= goal:
-        out += f"🏆 Target smashed! {total_solved}/{goal}.\n"
+        out += f" Target smashed! {total_solved}/{goal}.\n"
     else:
-        out += f"👍 Decent: {total_solved}/{goal}. Push harder next week.\n"
+        out += f" Decent: {total_solved}/{goal}. Push harder next week.\n"
     out += "\n### Next Week Directives\n1. Tackle skipped problems first.\n2. [NeetCode Roadmap](https://neetcode.io) for DSA structure.\n3. [IndiaBix](https://www.indiabix.com) for Aptitude + Verbal.\n"
     return out
 
 def generate_suggestion():
     with get_db() as db:
         skipped = db.execute(
-            "SELECT topic, COUNT(*) as c FROM problems WHERE status='Skipped' AND topic!='' GROUP BY topic ORDER BY c DESC LIMIT 3"
+            "SELECT topic, COUNT(*) as c FROM problems WHERE user_id=1 AND status='Skipped' AND topic!='' GROUP BY topic ORDER BY c DESC LIMIT 3"
         ).fetchall()
-        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings").fetchall()}
+        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings WHERE user_id=1").fetchall()}
         deadline = settings.get('placement_deadline', '2026-10-01')
         days_left = (date.fromisoformat(deadline) - date.today()).days
-        total = db.execute("SELECT COUNT(*) as c FROM problems").fetchone()['c']
-        solved = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Solved'").fetchone()['c']
+        total = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=1").fetchone()['c']
+        solved = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=1 AND status='Solved'").fetchone()['c']
 
     pct = round(solved/total*100, 1) if total else 0
     out = f"""### Priority Study Directives
@@ -738,87 +720,58 @@ def generate_suggestion():
 """
     return out
 
-
-# ─── DAILY PLAN GENERATION ───────────────────────────────────────────────────
-def generate_daily_plan(today_str=None):
+# ─── DAILY PLAN GENERATION ────────────────────────────────────────────────────
+def generate_daily_plan(today_str=None, user_id=None):
     if not today_str:
         today_str = date.today().isoformat()
+    if user_id is None:
+        raise ValueError("user_id is required")
 
     with get_db() as db:
-        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings").fetchall()}
-        goal = int(settings.get('daily_goal', 10))
-        existing = db.execute("SELECT COUNT(*) as c FROM daily_plan WHERE plan_date=?", (today_str,)).fetchone()
-        if existing['c'] > 0:
-            return get_todays_plan(today_str)
-
+        # Delete any existing plan for this date (to ensure clean state)
+        db.execute("DELETE FROM daily_plan WHERE user_id=? AND plan_date=?", (user_id, today_str))
+        # Only fetch problems scheduled for this date
         scheduled = db.execute(
-            "SELECT * FROM problems WHERE scheduled_date=? AND status='Pending' ORDER BY CASE difficulty WHEN 'Easy' THEN 1 WHEN 'Medium' THEN 2 ELSE 3 END LIMIT ?",
-            (today_str, goal)
+            "SELECT * FROM problems WHERE user_id=? AND scheduled_date=? AND status='Pending' ORDER BY CASE difficulty WHEN 'Easy' THEN 1 WHEN 'Medium' THEN 2 ELSE 3 END",
+            (user_id, today_str)
         ).fetchall()
 
-        plan_problems = list(scheduled)
-        remaining = goal - len(plan_problems)
-
-        if remaining > 0:
-            scheduled_ids = [p['id'] for p in plan_problems]
-            cats_in_db = [c['category'] for c in db.execute("SELECT DISTINCT category FROM problems").fetchall()]
-            non_dsa = [c for c in cats_in_db if c not in ('DSA', 'HR')]
-            dsa_count = max(1, remaining // 2)
-            other_count = (remaining - dsa_count) // max(len(non_dsa), 1) if non_dsa else 0
-            dist = []
-            if 'DSA' in cats_in_db:
-                dist.append(('DSA', dsa_count))
-            for c in non_dsa:
-                dist.append((c, max(1, other_count)))
-
-            for cat, count in dist:
-                if remaining <= 0:
-                    break
-                take = min(count, remaining)
-                exclude = scheduled_ids + [p['id'] for p in plan_problems]
-                placeholders = ','.join('?' * len(exclude)) if exclude else '0'
-                extra = db.execute(
-                    f"SELECT * FROM problems WHERE category=? AND status='Pending' AND id NOT IN ({placeholders}) ORDER BY CASE difficulty WHEN 'Easy' THEN 1 WHEN 'Medium' THEN 2 ELSE 3 END LIMIT ?",
-                    [cat] + exclude + [take]
-                ).fetchall()
-                plan_problems.extend(extra)
-                remaining -= len(extra)
-
-        for i, p in enumerate(plan_problems):
+        for i, p in enumerate(scheduled):
             db.execute(
-                "INSERT INTO daily_plan (plan_date, problem_id, order_index, status) VALUES (?,?,?,?)",
-                (today_str, p['id'], i, 'Pending')
+                "INSERT INTO daily_plan (user_id, plan_date, problem_id, order_index, status) VALUES (?,?,?,?,?)",
+                (user_id, today_str, p['id'], i, 'Pending')
             )
-        db.execute("INSERT OR IGNORE INTO daily_log (log_date, problems_target) VALUES (?,?)", (today_str, goal))
         db.commit()
 
-    return get_todays_plan(today_str)
+    return get_todays_plan(today_str, user_id)
 
-def get_todays_plan(today_str=None):
+def get_todays_plan(today_str=None, user_id=None):
     if not today_str:
         today_str = date.today().isoformat()
+    if user_id is None:
+        raise ValueError("user_id is required")
     with get_db() as db:
         plan = db.execute('''
             SELECT dp.id as plan_id, dp.status as plan_status, dp.order_index,
                    p.id, p.name, p.category, p.topic, p.difficulty, p.platform,
                    p.problem_link, p.resource_link, p.notes
             FROM daily_plan dp JOIN problems p ON dp.problem_id = p.id
-            WHERE dp.plan_date = ? ORDER BY dp.order_index
-        ''', (today_str,)).fetchall()
+            WHERE dp.user_id=? AND dp.plan_date = ? ORDER BY dp.order_index
+        ''', (user_id, today_str)).fetchall()
     return [dict(r) for r in plan]
 
-def generate_daily_briefing():
+def generate_daily_briefing(user_id):
     today = date.today().isoformat()
     with get_db() as db:
-        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings").fetchall()}
-        total = db.execute("SELECT COUNT(*) as c FROM problems").fetchone()['c']
-        solved = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Solved'").fetchone()['c']
-        pending = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Pending'").fetchone()['c']
-        skipped = db.execute("SELECT COUNT(*) as c FROM problems WHERE status='Skipped'").fetchone()['c']
-        yesterday_log = db.execute("SELECT * FROM daily_log WHERE log_date=?",
-                                   ((date.today() - timedelta(days=1)).isoformat(),)).fetchone()
+        settings = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings WHERE user_id=?", (user_id,)).fetchall()}
+        total = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=?", (user_id,)).fetchone()['c']
+        solved = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=? AND status='Solved'", (user_id,)).fetchone()['c']
+        pending = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=? AND status='Pending'", (user_id,)).fetchone()['c']
+        skipped = db.execute("SELECT COUNT(*) as c FROM problems WHERE user_id=? AND status='Skipped'", (user_id,)).fetchone()['c']
+        yesterday_log = db.execute("SELECT * FROM daily_log WHERE user_id=? AND log_date=?", (user_id, (date.today() - timedelta(days=1)).isoformat())).fetchone()
         weak_topics = db.execute(
-            "SELECT topic, COUNT(*) as c FROM problems WHERE status='Skipped' AND topic!='' GROUP BY topic ORDER BY c DESC LIMIT 3"
+            "SELECT topic, COUNT(*) as c FROM problems WHERE user_id=? AND status='Skipped' AND topic!='' GROUP BY topic ORDER BY c DESC LIMIT 3",
+            (user_id,)
         ).fetchall()
         deadline = settings.get('placement_deadline', '2026-10-01')
         days_left = (date.fromisoformat(deadline) - date.today()).days
@@ -841,11 +794,11 @@ Generate a short (4-5 sentences), direct, honest daily briefing.
 Include: progress status, what to focus on today, one free resource.
 Be a direct mentor, not a cheerleader. Use the numbers.
 """
-    feedback, model = ask_ai(prompt)
+    feedback, model = ask_ai(prompt, user_id=user_id)
     with get_db() as db:
         db.execute(
-            "INSERT OR REPLACE INTO ai_feedback (feedback_date, feedback_type, content, model_used) VALUES (?,?,?,?)",
-            (today, 'daily', feedback, model)
+            "INSERT OR REPLACE INTO ai_feedback (user_id, feedback_date, feedback_type, content, model_used) VALUES (?,?,?,?,?)",
+            (user_id, today, 'daily', feedback, model)
         )
         db.commit()
     return feedback, model

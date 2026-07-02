@@ -19,8 +19,19 @@ def get_db():
 
 def init_db():
     with get_db() as db:
+        # Users table
+        db.execute('''CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            username TEXT NOT NULL,
+            email TEXT UNIQUE NOT NULL,
+            password_hash TEXT NOT NULL,
+            created_at TEXT DEFAULT (date('now'))
+        )''')
+
+        # Problems – added user_id
         db.execute('''CREATE TABLE IF NOT EXISTS problems (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             category TEXT DEFAULT 'DSA',
             topic TEXT DEFAULT '',
@@ -36,9 +47,11 @@ def init_db():
             month_number INTEGER DEFAULT 0,
             import_batch TEXT DEFAULT '',
             notes TEXT DEFAULT '',
-            created_at TEXT DEFAULT (date('now'))
+            created_at TEXT DEFAULT (date('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
 
+        # Courses – optionally user-specific (keep shared for simplicity)
         db.execute('''CREATE TABLE IF NOT EXISTS courses (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             name TEXT NOT NULL,
@@ -79,9 +92,11 @@ def init_db():
             solved_problems INTEGER DEFAULT 0
         )''')
 
+        # Daily log – added user_id
         db.execute('''CREATE TABLE IF NOT EXISTS daily_log (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
-            log_date TEXT NOT NULL UNIQUE,
+            user_id INTEGER NOT NULL,
+            log_date TEXT NOT NULL,
             problems_solved INTEGER DEFAULT 0,
             problems_attempted INTEGER DEFAULT 0,
             problems_skipped INTEGER DEFAULT 0,
@@ -90,21 +105,27 @@ def init_db():
             course_studied TEXT DEFAULT '',
             study_hours REAL DEFAULT 0,
             mood TEXT DEFAULT '',
-            notes TEXT DEFAULT ''
+            notes TEXT DEFAULT '',
+            UNIQUE(user_id, log_date),
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
 
+        # Daily plan – added user_id
         db.execute('''CREATE TABLE IF NOT EXISTS daily_plan (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             plan_date TEXT NOT NULL,
             problem_id INTEGER,
             order_index INTEGER DEFAULT 0,
             status TEXT DEFAULT 'Pending',
             plan_type TEXT DEFAULT 'problem',
+            FOREIGN KEY (user_id) REFERENCES users(id),
             FOREIGN KEY (problem_id) REFERENCES problems(id)
         )''')
 
         db.execute('''CREATE TABLE IF NOT EXISTS projects (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             name TEXT NOT NULL,
             description TEXT DEFAULT '',
             tech_stack TEXT DEFAULT '',
@@ -112,13 +133,9 @@ def init_db():
             target_date TEXT DEFAULT '',
             status TEXT DEFAULT 'In Progress',
             github_link TEXT DEFAULT '',
-            completion_pct INTEGER DEFAULT 0
+            completion_pct INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
-
-        cur = db.execute("PRAGMA table_info(projects)")
-        columns = [c[1] for c in cur.fetchall()]
-        if 'status' not in columns:
-            db.execute("ALTER TABLE projects ADD COLUMN status TEXT DEFAULT 'In Progress'")
 
         db.execute('''CREATE TABLE IF NOT EXISTS milestones (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -133,33 +150,34 @@ def init_db():
 
         db.execute('''CREATE TABLE IF NOT EXISTS imports (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             filename TEXT NOT NULL,
             import_date TEXT DEFAULT (date('now')),
             total_imported INTEGER DEFAULT 0,
             category TEXT DEFAULT '',
             notes TEXT DEFAULT '',
-            protected INTEGER DEFAULT 0
+            protected INTEGER DEFAULT 0,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
-
-        cur = db.execute("PRAGMA table_info(imports)")
-        imp_cols = [c[1] for c in cur.fetchall()]
-        if 'protected' not in imp_cols:
-            db.execute("ALTER TABLE imports ADD COLUMN protected INTEGER DEFAULT 0")
 
         db.execute('''CREATE TABLE IF NOT EXISTS ai_feedback (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             feedback_date TEXT DEFAULT (date('now')),
             feedback_type TEXT DEFAULT 'daily',
             content TEXT DEFAULT '',
-            model_used TEXT DEFAULT ''
+            model_used TEXT DEFAULT '',
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
 
         db.execute('''CREATE TABLE IF NOT EXISTS settings (
-            key TEXT PRIMARY KEY,
-            value TEXT
+            user_id INTEGER PRIMARY KEY,
+            key TEXT NOT NULL,
+            value TEXT,
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
 
-        # News cache table - stores fetched articles with daily expiry
+        # News cache – shared (no user_id)
         db.execute('''CREATE TABLE IF NOT EXISTS news_cache (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             cache_date TEXT NOT NULL,
@@ -168,42 +186,60 @@ def init_db():
 
         db.execute('''CREATE TABLE IF NOT EXISTS weekly_goals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             week_start TEXT NOT NULL,
             week_end TEXT NOT NULL,
             target_problems INTEGER DEFAULT 70,
             done_problems INTEGER DEFAULT 0,
             target_courses INTEGER DEFAULT 2,
             done_courses INTEGER DEFAULT 0,
-            notes TEXT DEFAULT ''
+            notes TEXT DEFAULT '',
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
 
         db.execute('''CREATE TABLE IF NOT EXISTS monthly_goals (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER NOT NULL,
             month TEXT NOT NULL,
             year INTEGER NOT NULL,
             target_problems INTEGER DEFAULT 300,
             done_problems INTEGER DEFAULT 0,
             topics_covered TEXT DEFAULT '',
-            notes TEXT DEFAULT ''
+            notes TEXT DEFAULT '',
+            FOREIGN KEY (user_id) REFERENCES users(id)
         )''')
 
-        defaults = {
-            'name': 'Student',
-            'daily_goal': '10',
-            'placement_deadline': '2026-10-01',
-            'study_hours': '4',
-            'target_companies': 'Service Based,Product Based',
-            'groq_api_key': '',
-            'gemini_api_key': '',
-            'openrouter_api_key': '',
-            'ai_provider': 'groq',
-            'dark_mode': 'false',
-            'reminder_time': '09:00',
-            'onboarded': 'false'
+        # Add user_id columns if they don't exist
+        tables = {
+            'problems': 'user_id',
+            'daily_log': 'user_id',
+            'daily_plan': 'user_id',
+            'projects': 'user_id',
+            'imports': 'user_id',
+            'ai_feedback': 'user_id',
+            'weekly_goals': 'user_id',
+            'monthly_goals': 'user_id',
         }
-        for k, v in defaults.items():
-            db.execute("INSERT OR IGNORE INTO settings VALUES (?,?)", (k, v))
+        for table, col in tables.items():
+            cur = db.execute(f"PRAGMA table_info({table})")
+            cols = [c[1] for c in cur.fetchall()]
+            if col not in cols:
+                db.execute(f"ALTER TABLE {table} ADD COLUMN {col} INTEGER DEFAULT 1")
+                # Set default user_id = 1 for existing rows
+                db.execute(f"UPDATE {table} SET {col}=1 WHERE {col} IS NULL")
 
+        # Ensure settings has user_id primary key
+        cur = db.execute("PRAGMA table_info(settings)")
+        cols = [c[1] for c in cur.fetchall()]
+        if 'user_id' not in cols:
+            db.execute("ALTER TABLE settings ADD COLUMN user_id INTEGER DEFAULT 1")
+            db.execute("UPDATE settings SET user_id=1 WHERE user_id IS NULL")
+            # Recreate primary key? SQLite doesn't support dropping PK; we'll keep as is.
+            # We'll handle by using user_id in queries.
+
+        # Default settings for each user will be inserted on signup
+
+        # Default courses
         default_courses = [
             ('Python', 'Py', 'Master Python from basics to advanced ML libraries'),
             ('Machine Learning & AI', 'ML', 'Numpy, Pandas, Sklearn, Deep Learning'),
@@ -219,6 +255,7 @@ def init_db():
             if not existing:
                 db.execute("INSERT INTO courses (name,icon,description) VALUES (?,?,?)", (name, icon, desc))
 
+        # Default algorithms
         default_algos = [
             ('Two Pointers', 'Array/String', 'Use two indices to solve problems in O(n)', 'Sorted arrays, pair sum, palindrome check', 'https://youtu.be/On03HWe2tZM', 'https://leetcode.com/tag/two-pointers/'),
             ('Sliding Window', 'Array/String', 'Maintain a window of elements as you move through array', 'Max sum subarray of size k, longest substring without repeat', 'https://youtu.be/MK-NZ4hN7rs', 'https://leetcode.com/tag/sliding-window/'),

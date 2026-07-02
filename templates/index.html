@@ -1,265 +1,260 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>MineTracker — Placement OS</title>
-<style>
-  :root {
-    --bg: #0f1117; --bg2: #1a1d27; --bg3: #22263a; --border: #2e3250;
-    --text: #e8eaf6; --text2: #9ca3c4; --text3: #6b7280;
-    --accent: #6366f1; --accent2: #818cf8; --green: #22c55e; --red: #ef4444;
-    --yellow: #f59e0b; --blue: #3b82f6; --purple: #a855f7;
-    --easy: #22c55e; --medium: #f59e0b; --hard: #ef4444;
-    --card: #1e2235; --card-hover: #262b42;
-    --radius: 12px; --shadow: 0 4px 24px rgba(0,0,0,0.4);
-  }
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, sans-serif; min-height: 100vh; }
-  a { color: var(--accent2); text-decoration: none; }
-  a:hover { text-decoration: underline; }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <title>MineTracker — placement-preparation-tracker</title>
+  <style>
+    /* ── RESET & VARIABLES ────────────────────────────────────────────── */
+    :root {
+      --bg: #0f1117; --bg2: #1a1d27; --bg3: #22263a; --border: #2e3250;
+      --text: #e8eaf6; --text2: #9ca3c4; --text3: #6b7280;
+      --accent: #6366f1; --accent2: #818cf8; --green: #22c55e; --red: #ef4444;
+      --yellow: #f59e0b; --blue: #3b82f6; --purple: #a855f7;
+      --easy: #22c55e; --medium: #f59e0b; --hard: #ef4444;
+      --card: #1e2235; --card-hover: #262b42;
+      --radius: 12px; --shadow: 0 4px 24px rgba(0,0,0,0.4);
+      --sidebar-width: 220px;
+    }
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: var(--bg); color: var(--text); font-family: 'Inter', system-ui, -apple-system, sans-serif; min-height: 100vh; }
+    a { color: var(--accent2); text-decoration: none; }
+    a:hover { text-decoration: underline; }
 
-  /* LAYOUT */
-  .layout { display: flex; height: 100vh; overflow: hidden; }
-  .sidebar {
-    width: 220px; background: var(--bg2); border-right: 1px solid var(--border);
-    display: flex; flex-direction: column; padding: 0; flex-shrink: 0;
-    overflow-y: auto;
-  }
-  .sidebar-logo {
-    padding: 20px 18px 14px; font-size: 1.2rem; font-weight: 800;
-    color: var(--accent2); border-bottom: 1px solid var(--border);
-    letter-spacing: -0.3px;
-  }
-  .sidebar-logo span { color: var(--text3); font-size: 0.7rem; display: block; font-weight: 400; margin-top: 2px; }
-  .nav-item {
-    display: flex; align-items: center; gap: 10px; padding: 11px 18px;
-    cursor: pointer; transition: all 0.15s; color: var(--text2); font-size: 0.88rem;
-    border-left: 3px solid transparent;
-  }
-  .nav-item:hover { background: var(--bg3); color: var(--text); }
-  .nav-item.active { background: rgba(99,102,241,0.12); color: var(--accent2); border-left-color: var(--accent); font-weight: 600; }
-  .nav-icon { width: 18px; text-align: center; font-size: 0.95rem; }
-  .main-content { flex: 1; overflow-y: auto; padding: 28px 32px; }
+    /* ── LAYOUT ────────────────────────────────────────────────────────── */
+    .layout { display: flex; height: 100vh; overflow: hidden; }
+    .sidebar {
+      width: var(--sidebar-width); background: var(--bg2); border-right: 1px solid var(--border);
+      display: flex; flex-direction: column; flex-shrink: 0; overflow-y: auto;
+    }
+    .sidebar-logo {
+      padding: 20px 18px 14px; font-size: 1.2rem; font-weight: 800;
+      color: var(--accent2); border-bottom: 1px solid var(--border);
+      letter-spacing: -0.3px;
+    }
+    .sidebar-logo span { color: var(--text3); font-size: 0.7rem; display: block; font-weight: 400; margin-top: 2px; }
+    .nav-item {
+      display: flex; align-items: center; gap: 10px; padding: 11px 18px;
+      cursor: pointer; transition: all 0.15s; color: var(--text2); font-size: 0.88rem;
+      border-left: 3px solid transparent;
+    }
+    .nav-item:hover { background: var(--bg3); color: var(--text); }
+    .nav-item.active { background: rgba(99,102,241,0.12); color: var(--accent2); border-left-color: var(--accent); font-weight: 600; }
+    .nav-icon { width: 18px; text-align: center; font-size: 0.95rem; }
+    .main-content { flex: 1; overflow-y: auto; padding: 28px 32px; }
 
-  /* HEADER */
-  .page-header { margin-bottom: 24px; }
-  .page-header h1 { font-size: 1.7rem; font-weight: 700; }
-  .page-header p { color: var(--text2); font-size: 0.9rem; margin-top: 4px; }
+    /* ── HEADER ────────────────────────────────────────────────────────── */
+    .page-header { margin-bottom: 24px; }
+    .page-header h1 { font-size: 1.7rem; font-weight: 700; }
+    .page-header p { color: var(--text2); font-size: 0.9rem; margin-top: 4px; }
 
-  /* CARDS */
-  .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
-  .card-sm { padding: 14px 18px; }
-  .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
-  .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
-  .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
+    /* ── CARDS & GRIDS ────────────────────────────────────────────────── */
+    .card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 20px; }
+    .card-sm { padding: 14px 18px; }
+    .grid-4 { display: grid; grid-template-columns: repeat(4,1fr); gap: 16px; }
+    .grid-3 { display: grid; grid-template-columns: repeat(3,1fr); gap: 16px; }
+    .grid-2 { display: grid; grid-template-columns: repeat(2,1fr); gap: 16px; }
 
-  /* STAT CARD */
-  .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
-  .stat-label { color: var(--text2); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
-  .stat-value { font-size: 2rem; font-weight: 700; }
-  .stat-sub { color: var(--text2); font-size: 0.8rem; margin-top: 4px; }
+    /* ── STAT CARD ────────────────────────────────────────────────────── */
+    .stat-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; }
+    .stat-label { color: var(--text2); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 6px; }
+    .stat-value { font-size: 2rem; font-weight: 700; }
+    .stat-sub { color: var(--text2); font-size: 0.8rem; margin-top: 4px; }
 
-  /* PROGRESS BAR */
-  .progress-bar { background: var(--bg3); border-radius: 99px; height: 8px; overflow: hidden; margin-top: 8px; }
-  .progress-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.6s ease; }
-  .progress-fill.green { background: var(--green); }
-  .progress-fill.yellow { background: var(--yellow); }
+    /* ── PROGRESS BAR ──────────────────────────────────────────────────── */
+    .progress-bar { background: var(--bg3); border-radius: 99px; height: 8px; overflow: hidden; margin-top: 8px; }
+    .progress-fill { height: 100%; border-radius: 99px; background: var(--accent); transition: width 0.6s ease; }
+    .progress-fill.green { background: var(--green); }
+    .progress-fill.yellow { background: var(--yellow); }
 
-  /* BUTTONS */
-  .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
-  .btn-primary { background: var(--accent); color: white; }
-  .btn-primary:hover { background: var(--accent2); }
-  .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
-  .btn-ghost:hover { background: var(--bg3); color: var(--text); }
-  .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
-  .btn-danger:hover { background: var(--red); color: white; }
-  .btn-green { background: var(--green); color: white; }
-  .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
+    /* ── BUTTONS ───────────────────────────────────────────────────────── */
+    .btn { display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; border-radius: 8px; border: none; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.15s; }
+    .btn-primary { background: var(--accent); color: white; }
+    .btn-primary:hover { background: var(--accent2); }
+    .btn-ghost { background: transparent; color: var(--text2); border: 1px solid var(--border); }
+    .btn-ghost:hover { background: var(--bg3); color: var(--text); }
+    .btn-danger { background: transparent; color: var(--red); border: 1px solid var(--red); }
+    .btn-danger:hover { background: var(--red); color: white; }
+    .btn-sm { padding: 5px 12px; font-size: 0.78rem; }
 
-  /* BADGES */
-  .badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 0.73rem; font-weight: 600; }
-  .badge-easy { background: rgba(34,197,94,0.15); color: var(--easy); }
-  .badge-medium { background: rgba(245,158,11,0.15); color: var(--yellow); }
-  .badge-hard { background: rgba(239,68,68,0.15); color: var(--red); }
-  .badge-solved { background: rgba(34,197,94,0.15); color: var(--green); }
-  .badge-pending { background: rgba(107,114,128,0.15); color: var(--text2); }
-  .badge-attempted { background: rgba(59,130,246,0.15); color: var(--blue); }
-  .badge-skipped { background: rgba(168,85,247,0.15); color: var(--purple); }
-  .badge-ai { background: rgba(99,102,241,0.15); color: var(--accent2); }
-  .badge-tag { background: rgba(99,102,241,0.1); color: var(--accent2); font-size: 0.68rem; padding: 2px 7px; }
+    /* ── BADGES ────────────────────────────────────────────────────────── */
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 0.73rem; font-weight: 600; }
+    .badge-easy { background: rgba(34,197,94,0.15); color: var(--easy); }
+    .badge-medium { background: rgba(245,158,11,0.15); color: var(--yellow); }
+    .badge-hard { background: rgba(239,68,68,0.15); color: var(--red); }
+    .badge-solved { background: rgba(34,197,94,0.15); color: var(--green); }
+    .badge-pending { background: rgba(107,114,128,0.15); color: var(--text2); }
+    .badge-attempted { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .badge-skipped { background: rgba(168,85,247,0.15); color: var(--purple); }
+    .badge-ai { background: rgba(99,102,241,0.15); color: var(--accent2); }
+    .badge-tag { background: rgba(99,102,241,0.1); color: var(--accent2); font-size: 0.68rem; padding: 2px 7px; }
 
-  /* INPUTS */
-  .input, .select, .textarea {
-    background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
-    color: var(--text); padding: 9px 12px; font-size: 0.87rem; width: 100%;
-    transition: border-color 0.15s; outline: none;
-  }
-  .input:focus, .select:focus, .textarea:focus { border-color: var(--accent); }
-  .input::placeholder { color: var(--text3); }
-  .select option { background: var(--bg2); }
+    /* ── INPUTS ────────────────────────────────────────────────────────── */
+    .input, .select, .textarea {
+      background: var(--bg3); border: 1px solid var(--border); border-radius: 8px;
+      color: var(--text); padding: 9px 12px; font-size: 0.87rem; width: 100%;
+      transition: border-color 0.15s; outline: none;
+    }
+    .input:focus, .select:focus, .textarea:focus { border-color: var(--accent); }
+    .input::placeholder { color: var(--text3); }
+    .select option { background: var(--bg2); }
 
-  /* FILTERS ROW */
-  .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
-  .filters .input, .filters .select { width: auto; min-width: 140px; }
-  .search-wrap { position: relative; flex: 1; min-width: 180px; max-width: 320px; }
-  .search-wrap .input { padding-left: 36px; }
-  .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); }
+    /* ── FILTERS ────────────────────────────────────────────────────────── */
+    .filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 18px; }
+    .filters .input, .filters .select { width: auto; min-width: 140px; }
+    .search-wrap { position: relative; flex: 1; min-width: 180px; max-width: 320px; }
+    .search-wrap .input { padding-left: 36px; }
+    .search-icon { position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: var(--text3); }
 
-  /* TABLE */
-  .table-wrap { overflow-x: auto; }
-  table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-  th { text-align: left; padding: 10px 12px; color: var(--text2); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); }
-  td { padding: 10px 12px; border-bottom: 1px solid rgba(46,50,80,0.5); vertical-align: middle; }
-  tr:hover td { background: rgba(255,255,255,0.02); }
-  .link-btn { color: var(--accent2); font-size: 0.75rem; padding: 3px 8px; border-radius: 5px; border: 1px solid rgba(99,102,241,0.3); display: inline-block; }
-  .link-btn:hover { background: rgba(99,102,241,0.15); text-decoration: none; }
+    /* ── TABLE ──────────────────────────────────────────────────────────── */
+    .table-wrap { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    th { text-align: left; padding: 10px 12px; color: var(--text2); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.4px; border-bottom: 1px solid var(--border); }
+    td { padding: 10px 12px; border-bottom: 1px solid rgba(46,50,80,0.5); vertical-align: middle; }
+    tr:hover td { background: rgba(255,255,255,0.02); }
+    .link-btn { color: var(--accent2); font-size: 0.75rem; padding: 3px 8px; border-radius: 5px; border: 1px solid rgba(99,102,241,0.3); display: inline-block; }
+    .link-btn:hover { background: rgba(99,102,241,0.15); text-decoration: none; }
 
-  /* STATUS BUTTON — clickable, cycles through statuses */
-  .status-btn {
-    cursor: pointer; border: none; background: none; padding: 0;
-    font-size: 0.73rem; font-weight: 600; border-radius: 99px;
-    padding: 3px 10px; transition: all 0.15s; user-select: none;
-  }
-  .status-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
-  .status-btn.Pending { background: rgba(107,114,128,0.15); color: var(--text2); }
-  .status-btn.Solved { background: rgba(34,197,94,0.15); color: var(--green); }
-  .status-btn.Attempted { background: rgba(59,130,246,0.15); color: var(--blue); }
-  .status-btn.Skipped { background: rgba(168,85,247,0.15); color: var(--purple); }
+    /* ── STATUS BUTTON ─────────────────────────────────────────────────── */
+    .status-btn {
+      cursor: pointer; border: none; background: none; padding: 0;
+      font-size: 0.73rem; font-weight: 600; border-radius: 99px;
+      padding: 3px 10px; transition: all 0.15s; user-select: none;
+    }
+    .status-btn:hover { filter: brightness(1.2); transform: scale(1.05); }
+    .status-btn.Pending { background: rgba(107,114,128,0.15); color: var(--text2); }
+    .status-btn.Solved { background: rgba(34,197,94,0.15); color: var(--green); }
+    .status-btn.Attempted { background: rgba(59,130,246,0.15); color: var(--blue); }
+    .status-btn.Skipped { background: rgba(168,85,247,0.15); color: var(--purple); }
 
-  /* PLAN ITEM */
-  .plan-item {
-    display: flex; align-items: center; gap: 12px; padding: 12px 14px;
-    background: var(--bg3); border-radius: 10px; margin-bottom: 8px;
-    border: 1px solid var(--border); transition: all 0.2s;
-  }
-  .plan-item.Solved { border-left: 3px solid var(--green); opacity: 0.75; }
-  .plan-item.Skipped { border-left: 3px solid var(--purple); opacity: 0.6; }
-  .plan-item.Attempted { border-left: 3px solid var(--blue); }
-  .plan-item.Pending { border-left: 3px solid var(--border); }
-  .plan-item-name { flex: 1; font-size: 0.88rem; font-weight: 500; }
-  .plan-item-name.done { text-decoration: line-through; color: var(--text3); }
-  .plan-meta { color: var(--text3); font-size: 0.75rem; margin-top: 2px; }
+    /* ── PLAN ITEM ────────────────────────────────────────────────────── */
+    .plan-item {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      background: var(--bg3); border-radius: 10px; margin-bottom: 8px;
+      border: 1px solid var(--border); transition: all 0.2s;
+    }
+    .plan-item.Solved { border-left: 3px solid var(--green); opacity: 0.75; }
+    .plan-item.Skipped { border-left: 3px solid var(--purple); opacity: 0.6; }
+    .plan-item.Attempted { border-left: 3px solid var(--blue); }
+    .plan-item.Pending { border-left: 3px solid var(--border); }
+    .plan-item-name { flex: 1; font-size: 0.88rem; font-weight: 500; }
+    .plan-item-name.done { text-decoration: line-through; color: var(--text3); }
+    .plan-meta { color: var(--text3); font-size: 0.75rem; margin-top: 2px; }
 
-  /* CYCLE BUTTONS IN PLAN */
-  .cycle-btns { display: flex; gap: 4px; }
-  .cycle-btn {
-    font-size: 0.72rem; padding: 3px 9px; border-radius: 6px; cursor: pointer;
-    border: 1px solid var(--border); background: var(--bg2); color: var(--text2);
-    transition: all 0.15s; white-space: nowrap;
-  }
-  .cycle-btn:hover { border-color: var(--accent); color: var(--text); }
-  .cycle-btn.active-solved { background: rgba(34,197,94,0.15); color: var(--green); border-color: var(--green); }
-  .cycle-btn.active-attempted { background: rgba(59,130,246,0.15); color: var(--blue); border-color: var(--blue); }
-  .cycle-btn.active-skipped { background: rgba(168,85,247,0.15); color: var(--purple); border-color: var(--purple); }
+    .cycle-btns { display: flex; gap: 4px; flex-wrap: wrap; }
+    .cycle-btn {
+      font-size: 0.72rem; padding: 3px 9px; border-radius: 6px; cursor: pointer;
+      border: 1px solid var(--border); background: var(--bg2); color: var(--text2);
+      transition: all 0.15s; white-space: nowrap;
+    }
+    .cycle-btn:hover { border-color: var(--accent); color: var(--text); }
+    .cycle-btn.active-solved { background: rgba(34,197,94,0.15); color: var(--green); border-color: var(--green); }
+    .cycle-btn.active-attempted { background: rgba(59,130,246,0.15); color: var(--blue); border-color: var(--blue); }
+    .cycle-btn.active-skipped { background: rgba(168,85,247,0.15); color: var(--purple); border-color: var(--purple); }
+    .cycle-btn.active-pending { background: rgba(107,114,128,0.15); color: var(--text2); border-color: var(--text2); }
 
-  /* AI BRIEFING */
-  .ai-card { background: linear-gradient(135deg,rgba(99,102,241,0.12),rgba(168,85,247,0.08)); border: 1px solid rgba(99,102,241,0.3); border-radius: var(--radius); padding: 20px; }
-  .ai-content { font-size: 0.87rem; line-height: 1.7; color: var(--text); }
-  .ai-content h1,.ai-content h2,.ai-content h3 { color: var(--accent2); margin: 10px 0 6px; font-size: 0.95rem; }
-  .ai-content ul,.ai-content ol { margin-left: 20px; }
-  .ai-content li { margin: 4px 0; }
-  .ai-content a { color: var(--accent2); }
-  .ai-content strong { color: var(--text); }
-  .ai-content code { background: var(--bg3); padding: 1px 6px; border-radius: 4px; font-size: 0.82rem; }
-  .ai-model-tag { font-size: 0.72rem; color: var(--text3); margin-top: 10px; display: flex; align-items: center; gap: 6px; }
+    /* ── AI BRIEFING ───────────────────────────────────────────────────── */
+    .ai-card { background: linear-gradient(135deg,rgba(99,102,241,0.12),rgba(168,85,247,0.08)); border: 1px solid rgba(99,102,241,0.3); border-radius: var(--radius); padding: 20px; }
+    .ai-content { font-size: 0.87rem; line-height: 1.7; color: var(--text); }
+    .ai-content h1,.ai-content h2,.ai-content h3 { color: var(--accent2); margin: 10px 0 6px; font-size: 0.95rem; }
+    .ai-content ul,.ai-content ol { margin-left: 20px; }
+    .ai-content li { margin: 4px 0; }
+    .ai-content a { color: var(--accent2); }
+    .ai-content strong { color: var(--text); }
+    .ai-content code { background: var(--bg3); padding: 1px 6px; border-radius: 4px; font-size: 0.82rem; }
+    .ai-model-tag { font-size: 0.72rem; color: var(--text3); margin-top: 10px; display: flex; align-items: center; gap: 6px; }
 
-  /* NEWS CARDS */
-  .news-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
-  .news-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: 10px;
-    padding: 14px; transition: all 0.15s;
-  }
-  .news-card:hover { border-color: var(--accent); background: var(--card-hover); }
-  .news-title { font-size: 0.85rem; font-weight: 500; line-height: 1.4; color: var(--text); margin-bottom: 8px; }
-  .news-meta { display: flex; align-items: center; gap: 8px; font-size: 0.73rem; color: var(--text3); }
+    /* ── NEWS ──────────────────────────────────────────────────────────── */
+    .news-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .news-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: 10px;
+      padding: 14px; transition: all 0.15s;
+    }
+    .news-card:hover { border-color: var(--accent); background: var(--card-hover); }
+    .news-title { font-size: 0.85rem; font-weight: 500; line-height: 1.4; color: var(--text); margin-bottom: 8px; }
+    .news-meta { display: flex; align-items: center; gap: 8px; font-size: 0.73rem; color: var(--text3); }
 
-  /* ALGO CARD */
-  .algo-card {
-    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
-    padding: 18px; transition: all 0.15s;
-  }
-  .algo-card:hover { border-color: rgba(99,102,241,0.4); }
-  .algo-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
-  .algo-pattern { font-size: 0.75rem; color: var(--accent2); margin-bottom: 8px; }
-  .algo-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
-  .mastery-btns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
-  .mastery-btn { font-size: 0.7rem; padding: 3px 8px; border-radius: 5px; cursor: pointer; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); transition: all 0.15s; }
-  .mastery-btn.active { background: rgba(99,102,241,0.2); color: var(--accent2); border-color: var(--accent); }
+    /* ── ALGO CARD ────────────────────────────────────────────────────── */
+    .algo-card {
+      background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+      padding: 18px; transition: all 0.15s;
+    }
+    .algo-card:hover { border-color: rgba(99,102,241,0.4); }
+    .algo-title { font-weight: 600; font-size: 0.95rem; margin-bottom: 4px; }
+    .algo-pattern { font-size: 0.75rem; color: var(--accent2); margin-bottom: 8px; }
+    .algo-desc { font-size: 0.82rem; color: var(--text2); line-height: 1.5; margin-bottom: 10px; }
+    .mastery-btns { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 8px; }
+    .mastery-btn { font-size: 0.7rem; padding: 3px 8px; border-radius: 5px; cursor: pointer; border: 1px solid var(--border); background: var(--bg2); color: var(--text2); transition: all 0.15s; }
+    .mastery-btn.active { background: rgba(99,102,241,0.2); color: var(--accent2); border-color: var(--accent); }
 
-  /* MODAL */
-  .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
-  .modal-overlay.open { display: flex; }
-  .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 500px; max-width: 95vw; max-height: 85vh; overflow-y: auto; }
-  .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
-  .form-group { margin-bottom: 14px; }
-  .form-label { display: block; font-size: 0.8rem; color: var(--text2); margin-bottom: 5px; }
-  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    /* ── MODAL ────────────────────────────────────────────────────────── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); z-index: 1000; justify-content: center; align-items: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 28px; width: 500px; max-width: 95vw; max-height: 85vh; overflow-y: auto; }
+    .modal h2 { font-size: 1.1rem; font-weight: 700; margin-bottom: 20px; }
+    .form-group { margin-bottom: 14px; }
+    .form-label { display: block; font-size: 0.8rem; color: var(--text2); margin-bottom: 5px; }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
 
-  /* TOAST */
-  .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
-  .toast { padding: 12px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; animation: slideIn 0.3s ease; min-width: 240px; }
-  .toast-success { background: #1a3a2a; border: 1px solid var(--green); color: var(--green); }
-  .toast-error { background: #3a1a1a; border: 1px solid var(--red); color: var(--red); }
-  .toast-info { background: #1a1f3a; border: 1px solid var(--accent); color: var(--accent2); }
-  @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+    /* ── TOAST ────────────────────────────────────────────────────────── */
+    .toast-container { position: fixed; top: 20px; right: 20px; z-index: 9999; display: flex; flex-direction: column; gap: 8px; }
+    .toast { padding: 12px 18px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; animation: slideIn 0.3s ease; min-width: 240px; }
+    .toast-success { background: #1a3a2a; border: 1px solid var(--green); color: var(--green); }
+    .toast-error { background: #3a1a1a; border: 1px solid var(--red); color: var(--red); }
+    .toast-info { background: #1a1f3a; border: 1px solid var(--accent); color: var(--accent2); }
+    @keyframes slideIn { from { transform: translateX(60px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 
-  /* LOADING */
-  .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
-  @keyframes spin { to { transform: rotate(360deg); } }
-  .loading-center { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 48px; color: var(--text2); }
-  .empty-state { text-align: center; padding: 48px 20px; color: var(--text2); }
-  .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
+    /* ── LOADING ──────────────────────────────────────────────────────── */
+    .spinner { display: inline-block; width: 18px; height: 18px; border: 2px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .loading-center { display: flex; align-items: center; justify-content: center; gap: 10px; padding: 48px; color: var(--text2); }
+    .empty-state { text-align: center; padding: 48px 20px; color: var(--text2); }
+    .empty-state .icon { font-size: 2.5rem; margin-bottom: 12px; }
 
-  /* SECTIONS */
-  .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
-  .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
-  .mt8 { margin-top: 8px; } .mt16 { margin-top: 16px; } .mt24 { margin-top: 24px; }
-  .mb8 { margin-bottom: 8px; } .mb16 { margin-bottom: 16px; }
-  .flex { display: flex; } .flex-center { display: flex; align-items: center; } .gap8 { gap: 8px; } .gap12 { gap: 12px; } .gap16 { gap: 16px; }
-  .ml-auto { margin-left: auto; }
-  .text-green { color: var(--green); } .text-red { color: var(--red); } .text-yellow { color: var(--yellow); } .text-blue { color: var(--blue); } .text-accent { color: var(--accent2); }
-  .text-muted { color: var(--text2); font-size: 0.82rem; }
-  .font-bold { font-weight: 700; }
+    /* ── SECTIONS ────────────────────────────────────────────────────── */
+    .section-title { font-size: 1rem; font-weight: 700; margin-bottom: 14px; display: flex; align-items: center; justify-content: space-between; }
+    .divider { border: none; border-top: 1px solid var(--border); margin: 20px 0; }
+    .mt8 { margin-top: 8px; } .mt16 { margin-top: 16px; } .mt24 { margin-top: 24px; }
+    .mb8 { margin-bottom: 8px; } .mb16 { margin-bottom: 16px; }
+    .flex { display: flex; } .flex-center { display: flex; align-items: center; } .gap8 { gap: 8px; } .gap12 { gap: 12px; } .gap16 { gap: 16px; }
+    .ml-auto { margin-left: auto; }
+    .text-green { color: var(--green); } .text-red { color: var(--red); } .text-yellow { color: var(--yellow); } .text-blue { color: var(--blue); } .text-accent { color: var(--accent2); }
+    .text-muted { color: var(--text2); font-size: 0.82rem; }
+    .font-bold { font-weight: 700; }
 
-  /* TABS */
-  .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
-  .tab-btn { padding: 9px 16px; font-size: 0.85rem; cursor: pointer; background: none; border: none; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
-  .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent); font-weight: 600; }
+    /* ── TABS ────────────────────────────────────────────────────────── */
+    .tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border); margin-bottom: 20px; }
+    .tab-btn { padding: 9px 16px; font-size: 0.85rem; cursor: pointer; background: none; border: none; color: var(--text2); border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+    .tab-btn.active { color: var(--accent2); border-bottom-color: var(--accent); font-weight: 600; }
 
-  /* PLAN COUNTER */
-  .plan-counter { display: flex; gap: 16px; padding: 14px 18px; background: var(--bg3); border-radius: 10px; margin-bottom: 16px; font-size: 0.85rem; }
-  .plan-counter-item { display: flex; align-items: center; gap: 6px; }
+    /* ── PLAN COUNTER ────────────────────────────────────────────────── */
+    .plan-counter { display: flex; gap: 16px; padding: 14px 18px; background: var(--bg3); border-radius: 10px; margin-bottom: 16px; font-size: 0.85rem; flex-wrap: wrap; }
+    .plan-counter-item { display: flex; align-items: center; gap: 6px; }
 
-  /* STREAKS AND MISC */
-  .streak-fire { font-size: 1.8rem; }
-  .readiness-ring { position: relative; width: 100px; height: 100px; }
-  .big-number { font-size: 3rem; font-weight: 800; line-height: 1; }
-  .pill { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 0.72rem; }
-  .pill-green { background: rgba(34,197,94,0.12); color: var(--green); }
-  .pill-red { background: rgba(239,68,68,0.12); color: var(--red); }
-  .pill-yellow { background: rgba(245,158,11,0.12); color: var(--yellow); }
-
-  /* IMPORT PREVIEW TABLE */
-  #import-preview-table table td, #import-preview-table table th { max-width: 200px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-
-  /* SCROLLBAR */
-  ::-webkit-scrollbar { width: 5px; height: 5px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
-
-  @media (max-width: 1100px) {
-    .grid-4 { grid-template-columns: repeat(2,1fr); }
-    .news-grid { grid-template-columns: repeat(2,1fr); }
-    .grid-3 { grid-template-columns: repeat(2,1fr); }
-  }
-  @media (max-width: 768px) {
-    .sidebar { width: 60px; }
-    .nav-item span, .sidebar-logo span, .sidebar-logo-text { display: none; }
-    .main-content { padding: 18px 14px; }
-    .grid-4, .grid-3, .grid-2, .news-grid { grid-template-columns: 1fr; }
-  }
-</style>
+    /* ── MOBILE ──────────────────────────────────────────────────────── */
+    @media (max-width: 1100px) {
+      .grid-4 { grid-template-columns: repeat(2,1fr); }
+      .news-grid { grid-template-columns: repeat(2,1fr); }
+      .grid-3 { grid-template-columns: repeat(2,1fr); }
+    }
+    @media (max-width: 768px) {
+      :root { --sidebar-width: 60px; }
+      .sidebar { width: var(--sidebar-width); }
+      .nav-item span, .sidebar-logo span, .sidebar-logo-text { display: none; }
+      .main-content { padding: 18px 14px; }
+      .grid-4, .grid-3, .grid-2, .news-grid { grid-template-columns: 1fr; }
+      .plan-item { flex-direction: column; align-items: stretch; }
+      .cycle-btns { justify-content: flex-start; margin-top: 6px; }
+      .modal { width: 100%; margin: 10px; }
+    }
+    /* small phones */
+    @media (max-width: 480px) {
+      .filters { flex-direction: column; align-items: stretch; }
+      .filters .input, .filters .select { width: 100%; min-width: unset; }
+      .search-wrap { max-width: 100%; }
+      .stat-value { font-size: 1.6rem; }
+    }
+  </style>
 </head>
 <body>
 <div class="layout">
@@ -267,28 +262,30 @@
   <div class="sidebar">
     <div class="sidebar-logo">
       ⛏ MineTracker
-      <span class="sidebar-logo-text">Placement OS</span>
+      <span>Wanna Track!</span>
     </div>
     <nav id="sidebar-nav">
-      <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard"><span class="nav-icon">🏠</span><span>Dashboard</span></div>
-      <div class="nav-item" onclick="showPage('daily')" data-page="daily"><span class="nav-icon">📅</span><span>Daily Plan</span></div>
-      <div class="nav-item" onclick="showPage('problems')" data-page="problems"><span class="nav-icon">🧩</span><span>Problem Tracker</span></div>
-      <div class="nav-item" onclick="showPage('topics')" data-page="topics"><span class="nav-icon">📚</span><span>Topic Planner</span></div>
-      <div class="nav-item" onclick="showPage('algorithms')" data-page="algorithms"><span class="nav-icon">🧠</span><span>Algorithm Library</span></div>
-      <div class="nav-item" onclick="showPage('courses')" data-page="courses"><span class="nav-icon">🎓</span><span>Courses</span></div>
-      <div class="nav-item" onclick="showPage('projects')" data-page="projects"><span class="nav-icon">🏗️</span><span>Projects</span></div>
-      <div class="nav-item" onclick="showPage('progress')" data-page="progress"><span class="nav-icon">📊</span><span>Progress Board</span></div>
-      <div class="nav-item" onclick="showPage('ai')" data-page="ai"><span class="nav-icon">🤖</span><span>AI Coach</span></div>
-      <div class="nav-item" onclick="showPage('news')" data-page="news"><span class="nav-icon">📰</span><span>Tech News</span></div>
-      <div class="nav-item" onclick="showPage('import')" data-page="import"><span class="nav-icon">📥</span><span>Import Excel</span></div>
-      <div class="nav-item" onclick="showPage('settings')" data-page="settings"><span class="nav-icon">⚙️</span><span>Settings</span></div>
+      <div class="nav-item active" onclick="showPage('dashboard')" data-page="dashboard"><span class="nav-icon"></span><span>Dashboard</span></div>
+      <div class="nav-item" onclick="showPage('daily')" data-page="daily"><span class="nav-icon"></span><span>Daily Plan</span></div>
+      <div class="nav-item" onclick="showPage('problems')" data-page="problems"><span class="nav-icon"></span><span>Problem Tracker</span></div>
+      <div class="nav-item" onclick="showPage('topics')" data-page="topics"><span class="nav-icon"></span><span>Topic Planner</span></div>
+      <div class="nav-item" onclick="showPage('algorithms')" data-page="algorithms"><span class="nav-icon"></span><span>Algorithm Library</span></div>
+      <div class="nav-item" onclick="showPage('projects')" data-page="projects"><span class="nav-icon"></span><span>Projects</span></div>
+      <div class="nav-item" onclick="showPage('progress')" data-page="progress"><span class="nav-icon"></span><span>Progress Board</span></div>
+      <div class="nav-item" onclick="showPage('ai')" data-page="ai"><span class="nav-icon"></span><span>AI Coach</span></div>
+      <div class="nav-item" onclick="showPage('news')" data-page="news"><span class="nav-icon"></span><span>Tech News</span></div>
+      <div class="nav-item" onclick="showPage('import')" data-page="import"><span class="nav-icon"></span><span>Import Excel</span></div>
+      <div class="nav-item" onclick="showPage('settings')" data-page="settings"><span class="nav-icon"></span><span>Settings</span></div>
+<div class="nav-item" onclick="logout()" style="margin-top: auto; border-top: 1px solid var(--border); padding-top: 12px;">
+  <span class="nav-icon">🚪</span><span>Logout</span>
+</div>
     </nav>
   </div>
 
   <!-- MAIN CONTENT -->
   <div class="main-content" id="main-content">
 
-    <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
+    <!-- DASHBOARD -->
     <div id="page-dashboard">
       <div class="page-header">
         <h1 id="dash-greeting">Good Morning! 👋</h1>
@@ -311,14 +308,14 @@
       </div>
     </div>
 
-    <!-- ═══════════════════ DAILY PLAN ═══════════════════ -->
+    <!-- DAILY PLAN -->
     <div id="page-daily" style="display:none">
-      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div>
           <h1>Daily Plan</h1>
           <p id="daily-date-label">Today's tasks</p>
         </div>
-        <div style="display:flex;gap:8px;align-items:center">
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
           <input type="date" id="plan-date-picker" class="input" style="width:auto" onchange="loadDailyPlan()">
           <button class="btn btn-ghost" onclick="refreshPlan()">↻ Regenerate</button>
         </div>
@@ -327,9 +324,9 @@
       <div id="daily-plan-list"></div>
     </div>
 
-    <!-- ═══════════════════ PROBLEMS ═══════════════════ -->
+    <!-- PROBLEMS -->
     <div id="page-problems" style="display:none">
-      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div><h1>Problem Tracker</h1><p>All imported problems</p></div>
         <button class="btn btn-primary" onclick="openAddProblem()">+ Add Problem</button>
       </div>
@@ -338,38 +335,30 @@
           <span class="search-icon">🔍</span>
           <input type="text" id="prob-search" class="input" placeholder="Search name, topic, category..." oninput="debounceSearch()">
         </div>
-        <select class="select" id="prob-cat" style="width:auto" onchange="loadProblems()">
-          <option value="">All Categories</option>
-        </select>
+        <select class="select" id="prob-cat" style="width:auto" onchange="loadProblems()"><option value="">All Categories</option></select>
         <select class="select" id="prob-status" style="width:auto" onchange="loadProblems()">
           <option value="">All Status</option>
           <option>Pending</option><option>Solved</option><option>Attempted</option><option>Skipped</option>
         </select>
         <select class="select" id="prob-diff" style="width:auto" onchange="loadProblems()">
-          <option value="">All Difficulty</option>
-          <option>Easy</option><option>Medium</option><option>Hard</option>
+          <option value="">All Difficulty</option><option>Easy</option><option>Medium</option><option>Hard</option>
         </select>
         <span id="prob-count" class="text-muted"></span>
       </div>
       <div class="card" style="padding:0">
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr>
-                <th>#</th><th>Problem</th><th>Category</th><th>Topic</th>
-                <th>Difficulty</th><th>Platform</th><th>Status</th><th>Links</th>
-              </tr>
-            </thead>
+            <thead><tr><th>#</th><th>Problem</th><th>Category</th><th>Topic</th><th>Difficulty</th><th>Platform</th><th>Status</th><th>Links</th></tr></thead>
             <tbody id="prob-tbody"></tbody>
           </table>
         </div>
       </div>
     </div>
 
-    <!-- ═══════════════════ TOPICS ═══════════════════ -->
+    <!-- TOPICS -->
     <div id="page-topics" style="display:none">
       <div class="page-header"><h1>Topic Planner</h1><p>Search any topic to see all problems and AI-curated resources</p></div>
-      <div style="display:flex;gap:10px;margin-bottom:20px">
+      <div style="display:flex;gap:10px;margin-bottom:20px;flex-wrap:wrap">
         <input type="text" id="topic-search-input" class="input" placeholder="e.g. Binary Search, DP, SQL, Graphs..." style="max-width:400px" onkeydown="if(event.key==='Enter')searchTopic()">
         <button class="btn btn-primary" onclick="searchTopic()">Search</button>
       </div>
@@ -377,7 +366,7 @@
       <div id="topic-result"></div>
     </div>
 
-    <!-- ═══════════════════ ALGORITHMS ═══════════════════ -->
+    <!-- ALGORITHMS -->
     <div id="page-algorithms" style="display:none">
       <div class="page-header"><h1>Algorithm Library</h1><p>Master the essential patterns for placement interviews</p></div>
       <div class="filters">
@@ -389,29 +378,16 @@
       <div id="algo-grid" class="grid-3"></div>
     </div>
 
-    <!-- ═══════════════════ COURSES ═══════════════════ -->
-    <div id="page-courses" style="display:none">
-      <div class="page-header"><h1>Courses</h1><p>Track your learning progress across all skills</p></div>
-      <div id="courses-grid" class="grid-3"></div>
-      <div id="course-topics-panel" style="display:none;margin-top:24px">
-        <div class="section-title">
-          <span id="course-topics-title">Topics</span>
-          <button class="btn btn-ghost btn-sm" onclick="closeCourseTopics()">✕ Close</button>
-        </div>
-        <div id="course-topics-list"></div>
-      </div>
-    </div>
-
-    <!-- ═══════════════════ PROJECTS ═══════════════════ -->
+    <!-- PROJECTS -->
     <div id="page-projects" style="display:none">
-      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div><h1>Projects</h1><p>Track your portfolio projects</p></div>
         <button class="btn btn-primary" onclick="openAddProject()">+ Add Project</button>
       </div>
       <div id="projects-list"></div>
     </div>
 
-    <!-- ═══════════════════ PROGRESS ═══════════════════ -->
+    <!-- PROGRESS BOARD -->
     <div id="page-progress" style="display:none">
       <div class="page-header"><h1>Progress Board</h1><p>Your full placement readiness overview</p></div>
       <div class="grid-4 mb16" id="progress-stats"></div>
@@ -426,34 +402,28 @@
         </div>
       </div>
       <div class="card">
-        <div class="section-title flex-center gap8">
-          Activity (Last 30 days)
-        </div>
+        <div class="section-title flex-center gap8">Activity (Last 30 days)</div>
         <div id="activity-chart" style="height:160px;position:relative;overflow:hidden"></div>
       </div>
     </div>
 
-    <!-- ═══════════════════ AI COACH ═══════════════════ -->
+    <!-- AI COACH -->
     <div id="page-ai" style="display:none">
-      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
-        <div>
-          <h1>AI Coach</h1>
-          <p>Ask anything — DSA, concepts, interview tips, or your own progress</p>
-        </div>
-        <button class="btn btn-ghost btn-sm" onclick="clearChat()" title="Clear conversation">🗑 Clear chat</button>
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
+        <div><h1>AI Coach</h1><p>Ask anything — DSA, concepts, interview tips, or your own progress</p></div>
+        <button class="btn btn-ghost btn-sm" onclick="clearChat()">🗑 Clear chat</button>
       </div>
-
-      <!-- Suggestion chips — split into two groups -->
+      <!-- Quick action chips -->
       <div style="margin-bottom:16px">
-        <div style="font-size:0.74rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">📊 About My Progress</div>
+        <div style="font-size:0.74rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">About My Progress</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-          <button class="btn btn-ghost btn-sm" onclick="quickAsk('What should I focus on today based on my daily plan?')">📅 Today\'s tasks</button>
-          <button class="btn btn-ghost btn-sm" onclick="quickAsk('How am I doing overall? Give me my readiness score and what it means.')">📈 My readiness</button>
-          <button class="btn btn-ghost btn-sm" onclick="quickAsk('What are my weakest topics based on what I have skipped?')">⚠️ My weak areas</button>
-          <button class="btn btn-ghost btn-sm" onclick="quickAsk('How many days are left for placement and am I on track to finish all problems?')">⏳ Am I on track?</button>
-          <button class="btn btn-ghost btn-sm" onclick="quickAsk('Give me a realistic weekly plan based on my current data and deadline.')">🗓 My week plan</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickAsk('What should I focus on today based on my daily plan?')">Today's tasks</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickAsk('How am I doing overall? Give me my readiness score and what it means.')">My readiness</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickAsk('What are my weakest topics based on what I have skipped?')">My weak areas</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickAsk('How many days are left for placement and am I on track to finish all problems?')">Am I on track?</button>
+          <button class="btn btn-ghost btn-sm" onclick="quickAsk('Give me a realistic weekly plan based on my current data and deadline.')">My week plan</button>
         </div>
-        <div style="font-size:0.74rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">🧠 Learn & Practice</div>
+        <div style="font-size:0.74rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.5px;margin-bottom:6px">Learn & Practice</div>
         <div style="display:flex;flex-wrap:wrap;gap:6px">
           <button class="btn btn-ghost btn-sm" onclick="quickAsk('Explain Dynamic Programming with examples and when to use it in interviews.')">DP explained</button>
           <button class="btn btn-ghost btn-sm" onclick="quickAsk('What is the Two Pointers technique? Show me 3 problems that use it.')">Two Pointers</button>
@@ -465,19 +435,15 @@
           <button class="btn btn-ghost btn-sm" onclick="quickAsk('What are the most important Graph algorithms for placement interviews?')">Graph algorithms</button>
         </div>
       </div>
-
       <!-- Chat window -->
       <div style="display:flex;flex-direction:column;gap:0;background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden">
         <div id="ai-chat-window" style="min-height:320px;max-height:480px;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px">
           <div id="ai-welcome-msg" style="text-align:center;padding:32px 20px;color:var(--text2)">
             <div style="font-size:2.5rem;margin-bottom:10px">🤖</div>
             <div style="font-weight:600;font-size:1rem;margin-bottom:6px;color:var(--text)">MineTracker AI Coach</div>
-            <div style="font-size:0.85rem;line-height:1.6">
-              Ask me anything — DSA concepts, interview tips, system design, aptitude, or just type <strong>"how am I doing?"</strong> to get your personal progress report.
-            </div>
+            <div style="font-size:0.85rem;line-height:1.6">Ask me anything — DSA concepts, interview tips, system design, aptitude, or just type <strong>"how am I doing?"</strong> to get your personal progress report.</div>
           </div>
         </div>
-        <!-- Input bar -->
         <div style="border-top:1px solid var(--border);padding:12px 16px;display:flex;gap:10px;align-items:center;background:var(--bg3)">
           <input type="text" id="ai-input" class="input" placeholder="Ask anything — explain DP, what should I do today, tips for Infosys..." style="flex:1;background:var(--bg2)" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendAIMessage();}">
           <button class="btn btn-primary" onclick="sendAIMessage()" id="ai-send-btn" style="white-space:nowrap">Send ↵</button>
@@ -485,16 +451,16 @@
       </div>
     </div>
 
-    <!-- ═══════════════════ NEWS ═══════════════════ -->
+    <!-- NEWS -->
     <div id="page-news" style="display:none">
-      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between">
+      <div class="page-header" style="display:flex;align-items:flex-start;justify-content:space-between;flex-wrap:wrap;gap:10px">
         <div><h1>Tech & Placement News</h1><p>Daily curated news — AI, tech, placements, careers</p></div>
         <button class="btn btn-ghost" onclick="loadNews(true)" id="news-refresh-btn">↻ Refresh</button>
       </div>
       <div id="news-container"><div class="loading-center"><div class="spinner"></div> Fetching latest news...</div></div>
     </div>
 
-    <!-- ═══════════════════ IMPORT ═══════════════════ -->
+    <!-- IMPORT -->
     <div id="page-import" style="display:none">
       <div class="page-header"><h1>Import Excel</h1><p>Upload your placement preparation spreadsheet</p></div>
       <div class="grid-2" style="align-items:start">
@@ -551,7 +517,7 @@
       </div>
     </div>
 
-    <!-- ═══════════════════ SETTINGS ═══════════════════ -->
+    <!-- SETTINGS -->
     <div id="page-settings" style="display:none">
       <div class="page-header"><h1>Settings</h1><p>Configure your placement preparation tracker</p></div>
       <div class="grid-2" style="align-items:start">
@@ -569,7 +535,7 @@
           <div class="card mb16">
             <div class="section-title">AI Keys (optional)</div>
             <p class="text-muted mb8">Add API keys to unlock AI coaching. The app works without keys using rule-based responses.</p>
-            <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center">
+            <div style="display:flex;gap:8px;margin-bottom:10px;align-items:center;flex-wrap:wrap">
               <button class="btn btn-ghost btn-sm" onclick="toggleAIProvider('groq')" id="btn-groq">Groq</button>
               <button class="btn btn-ghost btn-sm" onclick="toggleAIProvider('gemini')" id="btn-gemini">Gemini</button>
               <button class="btn btn-ghost btn-sm" onclick="toggleAIProvider('openrouter')" id="btn-openrouter">OpenRouter</button>
@@ -646,7 +612,6 @@ function showPage(page) {
     problems: () => { loadCategories(); loadProblems(); },
     topics: loadTopicChips,
     algorithms: loadAlgorithms,
-    courses: loadCourses,
     projects: loadProjects,
     progress: loadProgress,
     ai: () => { loadCoachFeedback(false); },
@@ -676,7 +641,7 @@ async function api(path, opts={}) {
   return res.json();
 }
 
-// ─── MARKDOWN RENDERER (simple) ───────────────────────────────────────────────
+// ─── MARKDOWN RENDERER ───────────────────────────────────────────────────────
 function md(text) {
   if (!text) return '';
   return text
@@ -701,19 +666,17 @@ async function loadDashboard() {
     settings = data.settings || {};
     const s = data.stats;
 
-    // Greeting
     const h = new Date().getHours();
     const greeting = h < 12 ? 'Good Morning' : h < 17 ? 'Good Afternoon' : 'Good Evening';
     document.getElementById('dash-greeting').textContent = `${greeting}, ${settings.name || 'Student'}! 👋`;
     document.getElementById('dash-subtitle').textContent =
       `${s.days_left} days to placement • Streak: ${s.streak} day${s.streak !== 1 ? 's' : ''} • ${s.solved}/${s.total} solved`;
 
-    // Stat cards — keep IDs on live-updatable elements
     document.getElementById('dash-stats').innerHTML = `
       <div class="stat-card">
         <div class="stat-label">Total Problems</div>
         <div class="stat-value">${s.total}</div>
-        <div class="stat-sub" id="stat-total-sub">${s.solved} solved • ${s.pending} pending</div>
+        <div class="stat-sub">${s.solved} solved • ${s.pending} pending</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Today's Progress</div>
@@ -723,17 +686,16 @@ async function loadDashboard() {
       </div>
       <div class="stat-card">
         <div class="stat-label">Current Streak</div>
-        <div class="stat-value">${s.streak} <span style="font-size:1.5rem">🔥</span></div>
+        <div class="stat-value">${s.streak} 🔥</div>
         <div class="stat-sub">${s.days_left} days to deadline</div>
       </div>
       <div class="stat-card">
         <div class="stat-label">Attempted / Skipped</div>
-        <div class="stat-value" id="stat-att-skip">${s.attempted}<span style="font-size:1.1rem;color:var(--text2)"> / ${s.skipped}</span></div>
-        <div class="stat-sub" id="stat-pct-overall">Overall: ${s.total ? Math.round(s.solved/s.total*100) : 0}% solved</div>
+        <div class="stat-value">${s.attempted}<span style="font-size:1.1rem;color:var(--text2)"> / ${s.skipped}</span></div>
+        <div class="stat-sub">Overall: ${s.total ? Math.round(s.solved/s.total*100) : 0}% solved</div>
       </div>
     `;
 
-    // Weekly/Monthly
     const w = data.weekly, m = data.monthly;
     const wPct = w.target_problems ? Math.min(100, Math.round(w.done_problems / w.target_problems * 100)) : 0;
     const mPct = m.target_problems ? Math.min(100, Math.round(m.done_problems / m.target_problems * 100)) : 0;
@@ -752,10 +714,8 @@ async function loadDashboard() {
       </div>
     `;
 
-    // Today's plan (compact)
     renderDashPlan(data.today_plan || []);
 
-    // AI briefing
     if (data.ai_briefing) {
       document.getElementById('dash-ai-briefing').innerHTML =
         `<div class="ai-content">${md(data.ai_briefing)}</div>
@@ -775,7 +735,8 @@ function renderDashPlan(plan) {
       '<div class="empty-state"><div class="icon">📭</div><p>No tasks today. Import your Excel sheet first.</p></div>';
     return;
   }
-  document.getElementById('dash-plan-list').innerHTML = plan.slice(0, 8).map(p => `
+  // Show all, no slice
+  document.getElementById('dash-plan-list').innerHTML = plan.map(p => `
     <div class="plan-item ${p.plan_status}" id="dash-plan-${p.plan_id}" data-status="${p.plan_status}">
       <div style="flex:1;min-width:0">
         <div class="plan-item-name ${p.plan_status === 'Solved' ? 'done' : ''}">${escHtml(p.name)}</div>
@@ -810,7 +771,7 @@ async function fetchAIBriefing() {
   }
 }
 
-// ─── DAILY PLAN (FIX: no page refresh needed for status changes) ──────────────
+// ─── DAILY PLAN ───────────────────────────────────────────────────────────────
 async function loadDailyPlan() {
   const picker = document.getElementById('plan-date-picker');
   const today = new Date().toISOString().slice(0, 10);
@@ -847,7 +808,7 @@ function renderDailyPlan(plan, dt) {
 
   if (!plan.length) {
     document.getElementById('daily-plan-list').innerHTML =
-      '<div class="empty-state"><div class="icon">🗓</div><p>No tasks for this day. Import your Excel sheet and set scheduled dates, or click Regenerate.</p></div>';
+      '<div class="empty-state"><div class="icon">🗓</div><p>No tasks scheduled for this date. Import an Excel file with dates or add problems manually.</p></div>';
     return;
   }
 
@@ -879,12 +840,12 @@ function renderDailyPlan(plan, dt) {
   `).join('');
 }
 
-// updatePlanStatus — daily plan page, no page reload, uses shared helpers
+// ─── PLAN STATUS UPDATE ─────────────────────────────────────────────────────
 async function updatePlanStatus(planId, probId, newStatus, dt) {
   const el = document.getElementById(`planitem-${planId}`);
   const currentStatus = el ? (el.getAttribute('data-status') || 'Pending') : 'Pending';
 
-  // ── Optimistic UI ──────────────────────────────────────────────────────────
+  // Optimistic UI
   if (el) {
     el.className = `plan-item ${newStatus}`;
     el.setAttribute('data-status', newStatus);
@@ -894,7 +855,7 @@ async function updatePlanStatus(planId, probId, newStatus, dt) {
     if (icon) icon.textContent = newStatus==='Solved' ? '✅' : newStatus==='Skipped' ? '⏭' : newStatus==='Attempted' ? '🔵' : '🔲';
     _highlightPlanBtns(el, newStatus);
   }
-  // Sync dashboard item too
+  // Sync dashboard
   const dashEl = document.getElementById(`dash-plan-${planId}`);
   if (dashEl) {
     dashEl.className = `plan-item ${newStatus}`;
@@ -904,7 +865,6 @@ async function updatePlanStatus(planId, probId, newStatus, dt) {
     _highlightPlanBtns(dashEl, newStatus);
   }
 
-  // ── API ────────────────────────────────────────────────────────────────────
   try {
     const res = await api(`/api/daily-plan/${planId}`, {
       method: 'PUT',
@@ -912,11 +872,9 @@ async function updatePlanStatus(planId, probId, newStatus, dt) {
     });
     const todaySolved = res.today_solved ?? 0;
     const goal = res.goal ?? parseInt(settings.daily_goal || 10);
-
-    // Update dashboard stat cards
     _updateTodayStats(todaySolved, goal);
 
-    // Update daily-plan counter bar
+    // Update daily plan counter
     const allItems = document.querySelectorAll('[id^="planitem-"]');
     const planSolved  = [...allItems].filter(e => e.classList.contains('Solved')).length;
     const planTried   = [...allItems].filter(e => e.classList.contains('Attempted')).length;
@@ -933,7 +891,7 @@ async function updatePlanStatus(planId, probId, newStatus, dt) {
         <span style="margin-left:8px;font-size:0.8rem;color:var(--green)">${planPct}%</span>
       </div>`;
   } catch(e) {
-    // Revert on failure
+    // Revert
     if (el) {
       el.className = `plan-item ${currentStatus}`;
       el.setAttribute('data-status', currentStatus);
@@ -943,7 +901,6 @@ async function updatePlanStatus(planId, probId, newStatus, dt) {
   }
 }
 
-// Shared helper — highlights the active button inside a plan-item element
 function _highlightPlanBtns(el, newStatus) {
   el.querySelectorAll('.cycle-btn').forEach(btn => {
     btn.classList.remove('active-solved', 'active-attempted', 'active-skipped', 'active-pending');
@@ -957,7 +914,6 @@ function _highlightPlanBtns(el, newStatus) {
   });
 }
 
-// Shared helper — updates Today's Progress stat card + header subtitle
 function _updateTodayStats(todaySolved, goal) {
   const pct = goal ? Math.min(100, Math.round(todaySolved / goal * 100)) : 0;
   const valEl = document.getElementById('stat-today-val');
@@ -966,7 +922,6 @@ function _updateTodayStats(todaySolved, goal) {
   if (valEl) valEl.textContent = todaySolved;
   if (barEl) barEl.style.width = pct + '%';
   if (pctEl) pctEl.textContent = `${pct}% of daily goal`;
-  // Update header subtitle last segment (X/Y solved)
   const subEl = document.getElementById('dash-subtitle');
   if (subEl) {
     const parts = subEl.textContent.split('•');
@@ -977,15 +932,11 @@ function _updateTodayStats(todaySolved, goal) {
   }
 }
 
-// Used from dashboard plan items — toggles back to Pending if already active
 async function markPlanStatus(planId, probId, requestedStatus, elemId) {
   const el = document.getElementById(elemId);
-
-  // Toggle: clicking the already-active status resets to Pending (undo)
   const currentStatus = el ? (el.getAttribute('data-status') || 'Pending') : 'Pending';
   const newStatus = (currentStatus === requestedStatus) ? 'Pending' : requestedStatus;
 
-  // ── Optimistic UI ─────────────────────────────────────────────────────────
   if (el) {
     el.className = `plan-item ${newStatus}`;
     el.setAttribute('data-status', newStatus);
@@ -997,7 +948,6 @@ async function markPlanStatus(planId, probId, requestedStatus, elemId) {
     _highlightPlanBtns(el, newStatus);
   }
 
-  // ── API ───────────────────────────────────────────────────────────────────
   try {
     const res = await api(`/api/daily-plan/${planId}`, {
       method: 'PUT',
@@ -1007,7 +957,6 @@ async function markPlanStatus(planId, probId, requestedStatus, elemId) {
     const goal = res.goal ?? parseInt(settings.daily_goal || 10);
     _updateTodayStats(todaySolved, goal);
 
-    // Sync the daily-plan page item if it's open
     const planEl = document.getElementById(`planitem-${planId}`);
     if (planEl) {
       planEl.className = `plan-item ${newStatus}`;
@@ -1017,7 +966,6 @@ async function markPlanStatus(planId, probId, requestedStatus, elemId) {
       _highlightPlanBtns(planEl, newStatus);
     }
   } catch(e) {
-    // Revert optimistic update on failure
     if (el) {
       el.className = `plan-item ${currentStatus}`;
       el.setAttribute('data-status', currentStatus);
@@ -1036,7 +984,7 @@ async function refreshPlan() {
   } catch(e) { toast('Failed to refresh plan', 'error'); }
 }
 
-// ─── PROBLEMS (FIX: real-time search with debounce) ───────────────────────────
+// ─── PROBLEMS ─────────────────────────────────────────────────────────────────
 let searchDebounceTimer = null;
 function debounceSearch() {
   clearTimeout(searchDebounceTimer);
@@ -1105,11 +1053,9 @@ async function loadProblems() {
   }
 }
 
-// FIX: cycleStatus — updates cell immediately without page refresh
 const STATUS_CYCLE = {Pending: 'Solved', Solved: 'Attempted', Attempted: 'Skipped', Skipped: 'Pending'};
 async function cycleStatus(id, currentStatus) {
   const newStatus = STATUS_CYCLE[currentStatus] || 'Pending';
-  // Optimistic update
   const btn = document.querySelector(`#prob-row-${id} .status-btn`);
   if (btn) {
     btn.textContent = newStatus;
@@ -1120,7 +1066,6 @@ async function cycleStatus(id, currentStatus) {
     await api(`/api/problems/${id}`, {method:'PUT', body: JSON.stringify({status: newStatus})});
   } catch(e) {
     toast('Failed to update status', 'error');
-    // Revert on failure
     if (btn) {
       btn.textContent = currentStatus;
       btn.className = `status-btn ${currentStatus}`;
@@ -1189,9 +1134,9 @@ async function searchTopic() {
 
     if (data.resources && Object.keys(data.resources).length) {
       html += `<div class="flex gap8 flex-wrap mb16">`;
-      if (data.resources.youtube) html += `<a href="${escHtml(data.resources.youtube)}" target="_blank" class="btn btn-ghost btn-sm">▶ YouTube</a>`;
-      if (data.resources.article) html += `<a href="${escHtml(data.resources.article)}" target="_blank" class="btn btn-ghost btn-sm">📄 Article</a>`;
-      if (data.resources.practice) html += `<a href="${escHtml(data.resources.practice)}" target="_blank" class="btn btn-ghost btn-sm">💻 Practice</a>`;
+      if (data.resources.youtube) html += `<a href="${escHtml(data.resources.youtube)}" target="_blank" class="btn btn-ghost btn-sm"> YouTube</a>`;
+      if (data.resources.article) html += `<a href="${escHtml(data.resources.article)}" target="_blank" class="btn btn-ghost btn-sm"> Article</a>`;
+      if (data.resources.practice) html += `<a href="${escHtml(data.resources.practice)}" target="_blank" class="btn btn-ghost btn-sm"> Practice</a>`;
       html += `</div>`;
     }
     html += `</div>`;
@@ -1215,7 +1160,7 @@ async function searchTopic() {
   }
 }
 
-// ─── ALGORITHMS (FIX: search with debounce) ───────────────────────────────────
+// ─── ALGORITHMS ──────────────────────────────────────────────────────────────
 let algoSearchTimer = null;
 function debounceAlgoSearch() {
   clearTimeout(algoSearchTimer);
@@ -1258,7 +1203,6 @@ async function loadAlgorithms() {
 }
 
 async function updateMastery(id, mastery, btn) {
-  // Optimistic UI
   const card = btn.closest('.algo-card');
   card.querySelectorAll('.mastery-btn').forEach(b => b.classList.remove('active'));
   btn.classList.add('active');
@@ -1266,67 +1210,6 @@ async function updateMastery(id, mastery, btn) {
     await api(`/api/algorithms/${id}`, {method:'PUT', body: JSON.stringify({mastery, solved_problems: 0})});
     toast(`Mastery set to: ${mastery}`);
   } catch(e) { toast('Failed to update mastery', 'error'); }
-}
-
-// ─── COURSES ─────────────────────────────────────────────────────────────────
-async function loadCourses() {
-  try {
-    const courses = await api('/api/courses');
-    const icons = {'Python':'🐍','Machine Learning & AI':'🤖','Data Visualization':'📊','SQL':'🗃','DevOps':'⚙️','MLOps':'🚀','HTML/CSS/JS':'🌐','DSA Patterns':'💡'};
-    document.getElementById('courses-grid').innerHTML = courses.map(c => {
-      const pct = c.total_topics ? Math.round(c.completed_topics/c.total_topics*100) : 0;
-      return `
-        <div class="card" style="cursor:pointer;transition:all 0.15s" onclick="openCourse(${c.id},'${escHtml(c.name)}')" onmouseover="this.style.borderColor='var(--accent)'" onmouseout="this.style.borderColor='var(--border)'">
-          <div style="font-size:2rem;margin-bottom:8px">${icons[c.name]||'📚'}</div>
-          <div style="font-weight:600;margin-bottom:4px">${escHtml(c.name)}</div>
-          <div class="text-muted mb8">${escHtml(c.description||'')}</div>
-          <div class="progress-bar"><div class="progress-fill" style="width:${pct}%"></div></div>
-          <div class="text-muted mt8">${c.completed_topics}/${c.total_topics||0} topics • ${pct}%</div>
-        </div>`;
-    }).join('');
-  } catch(e) { toast('Failed to load courses', 'error'); }
-}
-
-async function openCourse(id, name) {
-  document.getElementById('course-topics-panel').style.display = 'block';
-  document.getElementById('course-topics-title').textContent = name;
-  document.getElementById('course-topics-list').innerHTML = '<div class="loading-center"><div class="spinner"></div></div>';
-  try {
-    const topics = await api(`/api/courses/${id}/topics`);
-    if (!topics.length) {
-      document.getElementById('course-topics-list').innerHTML = '<div class="empty-state"><div class="icon">📚</div><p>No topics added yet for this course.</p></div>';
-      return;
-    }
-    const statuses = ['Not Started','In Progress','Completed'];
-    document.getElementById('course-topics-list').innerHTML = topics.map(t => `
-      <div class="plan-item ${t.status === 'Completed' ? 'Solved' : 'Pending'}" style="margin-bottom:6px">
-        <div style="flex:1">
-          <div style="font-weight:500;font-size:0.87rem ${t.status==='Completed'?';text-decoration:line-through;color:var(--text3)':''}">${escHtml(t.topic_name)}</div>
-          ${t.description ? `<div class="plan-meta">${escHtml(t.description)}</div>` : ''}
-        </div>
-        <div style="display:flex;gap:4px;flex-wrap:wrap">
-          ${t.youtube_link ? `<a href="${escHtml(t.youtube_link)}" target="_blank" class="link-btn">▶</a>` : ''}
-          ${t.article_link ? `<a href="${escHtml(t.article_link)}" target="_blank" class="link-btn">📄</a>` : ''}
-          ${t.practice_link ? `<a href="${escHtml(t.practice_link)}" target="_blank" class="link-btn">💻</a>` : ''}
-        </div>
-        <select class="select" style="width:auto;font-size:0.75rem" onchange="updateTopicStatus(${id},${t.id},this.value)">
-          ${statuses.map(s => `<option ${s===t.status?'selected':''}>${s}</option>`).join('')}
-        </select>
-      </div>
-    `).join('');
-  } catch(e) { toast('Failed to load topics', 'error'); }
-}
-
-async function updateTopicStatus(cid, tid, status) {
-  try {
-    await api(`/api/courses/${cid}/topics/${tid}`, {method:'PUT', body: JSON.stringify({status})});
-    toast(`Topic marked: ${status}`);
-    loadCourses();
-  } catch(e) { toast('Failed to update topic', 'error'); }
-}
-
-function closeCourseTopics() {
-  document.getElementById('course-topics-panel').style.display = 'none';
 }
 
 // ─── PROJECTS ─────────────────────────────────────────────────────────────────
@@ -1340,7 +1223,7 @@ async function loadProjects() {
     }
     document.getElementById('projects-list').innerHTML = projects.map(p => `
       <div class="card mb16">
-        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
           <div style="flex:1">
             <div style="font-weight:700;font-size:1rem">${escHtml(p.name)}</div>
             <div class="text-muted mt8">${escHtml(p.description||'')}</div>
@@ -1450,7 +1333,7 @@ async function submitAddProject() {
   } catch(e) { toast('Failed to add project', 'error'); }
 }
 
-// ─── PROGRESS ─────────────────────────────────────────────────────────────────
+// ─── PROGRESS BOARD ───────────────────────────────────────────────────────────
 async function loadProgress() {
   try {
     const data = await api('/api/stats');
@@ -1478,7 +1361,6 @@ async function loadProgress() {
       </div>
     `;
 
-    // Category bars
     document.getElementById('category-bars').innerHTML = (s.categories || []).map(c => {
       const pct = c.total ? Math.round(c.solved/c.total*100) : 0;
       return `
@@ -1491,20 +1373,18 @@ async function loadProgress() {
         </div>`;
     }).join('') || '<div class="text-muted">No data yet</div>';
 
-    // Readiness display
     const rColor = s.readiness >= 70 ? 'var(--green)' : s.readiness >= 40 ? 'var(--yellow)' : 'var(--red)';
     document.getElementById('readiness-display').innerHTML = `
       <div style="font-size:4rem;font-weight:800;color:${rColor};line-height:1">${s.readiness}</div>
       <div style="font-size:1rem;color:var(--text2);margin-top:8px">out of 100</div>
       <div style="margin-top:16px;font-size:0.82rem;color:var(--text2)">
-        ${s.readiness >= 80 ? '🏆 Excellent! You are placement-ready.' :
-          s.readiness >= 60 ? '👍 Good progress. Keep pushing.' :
-          s.readiness >= 40 ? '⚠️ Moderate. Increase solving speed.' :
-          '🚨 Low readiness. Start solving now.'}
+        ${s.readiness >= 80 ? ' Excellent! You are placement-ready.' :
+          s.readiness >= 60 ? ' Good progress. Keep pushing.' :
+          s.readiness >= 40 ? ' Moderate. Increase solving speed.' :
+          ' Low readiness. Start solving now.'}
       </div>
     `;
 
-    // Activity chart
     const daily = s.daily_data || [];
     const maxVal = Math.max(...daily.map(d => d.solved), 1);
     document.getElementById('activity-chart').innerHTML = `
@@ -1522,12 +1402,11 @@ async function loadProgress() {
   } catch(e) { toast('Failed to load progress', 'error'); }
 }
 
-// ─── AI COACH — CHAT HISTORY ──────────────────────────────────────────────────
-const chatHistory = [];   // { role: 'user'|'ai', text, model }
+// ─── AI COACH ─────────────────────────────────────────────────────────────────
+const chatHistory = [];
 
 function appendChatBubble(role, text, model) {
   const win = document.getElementById('ai-chat-window');
-  // Remove welcome message once real messages start
   const welcome = document.getElementById('ai-welcome-msg');
   if (welcome) welcome.remove();
 
@@ -1584,11 +1463,9 @@ async function sendAIMessage() {
   input.value = '';
   input.focus();
 
-  // Show user bubble immediately
   appendChatBubble('user', msg, null);
   chatHistory.push({ role: 'user', text: msg });
 
-  // Show typing indicator
   appendTypingIndicator();
 
   try {
@@ -1598,7 +1475,7 @@ async function sendAIMessage() {
     chatHistory.push({ role: 'ai', text: data.content, model: data.model });
   } catch(e) {
     removeTypingIndicator();
-    appendChatBubble('ai', '❌ Failed to get a response. Check your API key in Settings, or try again.', 'error');
+    appendChatBubble('ai', 'Failed to get a response. Check your API key in Settings, or try again.', 'error');
   } finally {
     btn.disabled = false;
     btn.textContent = 'Send ↵';
@@ -1616,13 +1493,10 @@ function clearChat() {
     <div id="ai-welcome-msg" style="text-align:center;padding:32px 20px;color:var(--text2)">
       <div style="font-size:2.5rem;margin-bottom:10px">🤖</div>
       <div style="font-weight:600;font-size:1rem;margin-bottom:6px;color:var(--text)">MineTracker AI Coach</div>
-      <div style="font-size:0.85rem;line-height:1.6">
-        Ask me anything — DSA concepts, interview tips, system design, aptitude, or just type <strong>"how am I doing?"</strong> to get your personal progress report.
-      </div>
+      <div style="font-size:0.85rem;line-height:1.6">Ask me anything — DSA concepts, interview tips, system design, aptitude, or just type <strong>"how am I doing?"</strong> to get your personal progress report.</div>
     </div>`;
 }
 
-// Used internally by dashboard briefing — not part of chat UI
 async function loadCoachFeedback(force=false) {
   const el = document.getElementById('coach-feedback');
   if (!el) return;
@@ -1636,7 +1510,7 @@ async function loadCoachFeedback(force=false) {
   }
 }
 
-// ─── NEWS (FIX: daily cache, force refresh button, placement/tech only) ────────
+// ─── NEWS ─────────────────────────────────────────────────────────────────────
 async function loadNews(forceRefresh=false) {
   document.getElementById('news-container').innerHTML =
     '<div class="loading-center"><div class="spinner"></div> Fetching news...</div>';
@@ -1651,7 +1525,6 @@ async function loadNews(forceRefresh=false) {
         '<div class="empty-state"><div class="icon">📰</div><p>No news available right now. Try refreshing.</p></div>';
       return;
     }
-    const tagColors = {'AI/ML':'purple','Career':'green','Web Dev':'blue','Languages':'yellow','Cloud/DevOps':'blue','Security':'red','Hardware':'text2','Open Source':'accent2','Tech':'text2','Industry':'yellow'};
     document.getElementById('news-container').innerHTML = `
       <div class="news-grid">
         ${articles.map(a => `
@@ -1710,11 +1583,6 @@ async function handleFileSelect() {
     info.innerHTML = `<div style="color:var(--green);font-size:0.85rem">✓ Parsed ${data.count} tasks from ${data.filenames?.length||1} file(s)</div>`;
     document.getElementById('preview-count').textContent = data.count;
 
-    if (data.overload_dates?.length) {
-      info.innerHTML += `<div style="color:var(--yellow);font-size:0.8rem;margin-top:4px">⚠ Date overload on: ${data.overload_dates.join(', ')}</div>`;
-    }
-
-    // Preview table
     const preview = uploadedTasks.slice(0, 30);
     document.getElementById('import-preview-table').innerHTML = `
       <table style="font-size:0.78rem">
@@ -1787,7 +1655,7 @@ async function loadImportHistory() {
           <div class="text-muted">${h.import_date} • ${h.total_imported} tasks</div>
         </div>
         <button onclick="toggleProtect(${h.id},${h.protected})" class="btn btn-ghost btn-sm" title="${h.protected?'Unprotect':'Protect'}">
-          ${h.protected ? '🔒' : '🔓'}
+          ${h.protected ? 'lock' : 'unlock'}
         </button>
       </div>
     `).join('');
@@ -1823,7 +1691,6 @@ async function loadSettings() {
     document.getElementById('s-groq').value = s.groq_api_key || '';
     document.getElementById('s-gemini').value = s.gemini_api_key || '';
     document.getElementById('s-openrouter').value = s.openrouter_api_key || '';
-    // Highlight active provider
     ['groq','gemini','openrouter'].forEach(p => {
       document.getElementById(`btn-${p}`).className = `btn btn-${s.ai_provider===p?'primary':'ghost'} btn-sm`;
     });
@@ -1854,6 +1721,11 @@ async function saveSettings() {
     toast('Settings saved!');
   } catch(e) { toast('Failed to save settings', 'error'); }
 }
+async function logout() {
+  if (confirm('Are you sure you want to log out?')) {
+    window.location.href = '/logout';
+  }
+}
 
 // ─── UTIL ─────────────────────────────────────────────────────────────────────
 function escHtml(str) {
@@ -1864,11 +1736,9 @@ function escHtml(str) {
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   loadDashboard();
-  // Load settings in background
   api('/api/settings').then(s => { settings = s; }).catch(() => {});
 });
 
-// Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(el => {
   el.addEventListener('click', e => { if (e.target === el) el.classList.remove('open'); });
 });

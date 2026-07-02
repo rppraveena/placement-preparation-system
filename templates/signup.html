@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>MineTracker — Create Account</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    background: #0a0c14;
+  }
+
+  .video-bg {
+    position: fixed;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+  }
+  .video-bg video {
+    position: absolute;
+    top: 50%; left: 50%;
+    transform: translate(-50%, -50%);
+    min-width: 100%; min-height: 100%;
+    width: auto; height: auto;
+    object-fit: cover;
+    opacity: 0.5;
+    filter: blur(1px) brightness(0.6);
+  }
+  .video-bg::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg,
+      rgba(6,8,20,0.82) 0%,
+      rgba(10,14,35,0.75) 50%,
+      rgba(6,8,20,0.82) 100%
+    );
+  }
+  .video-bg-fallback {
+    position: absolute;
+    inset: 0;
+    background:
+      radial-gradient(ellipse at 20% 50%, rgba(30,40,80,0.6) 0%, transparent 60%),
+      radial-gradient(ellipse at 80% 20%, rgba(20,30,60,0.4) 0%, transparent 50%),
+      linear-gradient(180deg, #060814 0%, #0d1228 50%, #060814 100%);
+  }
+
+  .card {
+    position: relative;
+    z-index: 10;
+    width: 100%;
+    max-width: 400px;
+    margin: 20px;
+    background: rgba(15, 18, 35, 0.82);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(99, 102, 241, 0.18);
+    border-radius: 20px;
+    padding: 36px 36px;
+    box-shadow: 0 32px 64px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04);
+  }
+
+  .logo {
+    text-align: center;
+    margin-bottom: 26px;
+  }
+  .logo-icon {
+    width: 52px; height: 52px;
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    border-radius: 14px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 22px;
+    font-weight: 800;
+    color: #fff;
+    letter-spacing: -1px;
+    margin-bottom: 14px;
+    box-shadow: 0 8px 24px rgba(99,102,241,0.35);
+  }
+  .logo-title {
+    font-size: 1.5rem;
+    font-weight: 800;
+    color: #e8eaf6;
+    letter-spacing: -0.5px;
+  }
+  .logo-sub {
+    font-size: 0.8rem;
+    color: #6b7280;
+    margin-top: 4px;
+  }
+
+  .form-group { margin-bottom: 14px; }
+  .form-label {
+    display: block;
+    font-size: 0.78rem;
+    font-weight: 500;
+    color: #9ca3af;
+    margin-bottom: 6px;
+    letter-spacing: 0.3px;
+    text-transform: uppercase;
+  }
+  .form-input {
+    width: 100%;
+    background: rgba(255,255,255,0.05);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    color: #e8eaf6;
+    padding: 12px 14px;
+    font-size: 0.95rem;
+    outline: none;
+    transition: border-color 0.2s, background 0.2s;
+    -webkit-appearance: none;
+  }
+  .form-input:focus {
+    border-color: rgba(99,102,241,0.6);
+    background: rgba(99,102,241,0.08);
+  }
+  .form-input::placeholder { color: #4b5563; }
+
+  .password-hint {
+    font-size: 0.73rem;
+    color: #4b5563;
+    margin-top: 4px;
+  }
+
+  .btn-submit {
+    width: 100%;
+    background: linear-gradient(135deg, #6366f1, #818cf8);
+    color: #fff;
+    border: none;
+    border-radius: 10px;
+    padding: 13px;
+    font-size: 0.95rem;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 6px;
+    letter-spacing: 0.2px;
+    transition: all 0.2s;
+    box-shadow: 0 4px 16px rgba(99,102,241,0.35);
+    -webkit-appearance: none;
+  }
+  .btn-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(99,102,241,0.45); }
+  .btn-submit:active { transform: translateY(0); }
+  .btn-submit:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+  .error-box {
+    display: none;
+    background: rgba(239,68,68,0.12);
+    border: 1px solid rgba(239,68,68,0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: #fca5a5;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+  .success-box {
+    display: none;
+    background: rgba(34,197,94,0.12);
+    border: 1px solid rgba(34,197,94,0.3);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    color: #86efac;
+    margin-bottom: 14px;
+    text-align: center;
+  }
+
+  .divider {
+    text-align: center;
+    margin-top: 20px;
+    font-size: 0.82rem;
+    color: #4b5563;
+  }
+  .divider a {
+    color: #818cf8;
+    text-decoration: none;
+    font-weight: 500;
+  }
+  .divider a:hover { text-decoration: underline; }
+
+  .ambient {
+    position: fixed;
+    z-index: 1;
+    border-radius: 50%;
+    filter: blur(80px);
+    pointer-events: none;
+  }
+  .ambient-1 { width: 300px; height: 300px; top: -80px; left: -80px; background: rgba(99,102,241,0.12); }
+  .ambient-2 { width: 250px; height: 250px; bottom: -60px; right: -60px; background: rgba(168,85,247,0.10); }
+
+  @media (max-width: 440px) {
+    .card { padding: 28px 22px; margin: 14px; border-radius: 16px; }
+    .logo-title { font-size: 1.3rem; }
+  }
+</style>
+</head>
+<body>
+
+<div class="video-bg">
+  <div class="video-bg-fallback"></div>
+  <video autoplay muted loop playsinline>
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-young-woman-typing-on-a-laptop-in-the-dark-41819-large.mp4" type="video/mp4">
+    <source src="https://assets.mixkit.co/videos/preview/mixkit-girl-at-her-desk-studying-in-the-dark-19085-large.mp4" type="video/mp4">
+  </video>
+</div>
+
+<div class="ambient ambient-1"></div>
+<div class="ambient ambient-2"></div>
+
+<div class="card">
+  <div class="logo">
+    <div class="logo-icon">M</div>
+    <div class="logo-title">MineTracker</div>
+    <div class="logo-sub">Create your account </div>
+  </div>
+
+  <div class="error-box" id="error-box"></div>
+  <div class="success-box" id="success-box"></div>
+
+  <form id="signup-form" onsubmit="handleSignup(event)">
+    <div class="form-group">
+      <label class="form-label">Name</label>
+      <input class="form-input" type="text" id="username"
+        placeholder="Your name" autocomplete="name" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Email</label>
+      <input class="form-input" type="email" id="email"
+        placeholder="you@email.com" autocomplete="email" required>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Password</label>
+      <input class="form-input" type="password" id="password"
+        placeholder="Min 6 characters" autocomplete="new-password"
+        oninput="checkStrength(this.value)" required>
+      <div class="password-hint" id="strength-hint"></div>
+    </div>
+
+    <button class="btn-submit" type="submit" id="submit-btn">Create Account</button>
+  </form>
+
+  <div class="divider">
+    Already have an account? <a href="/login">Sign in</a>
+  </div>
+</div>
+
+<script>
+function checkStrength(val) {
+  const hint = document.getElementById('strength-hint');
+  if (!val) { hint.textContent = ''; return; }
+  if (val.length < 6) { hint.textContent = 'Too short'; hint.style.color = '#ef4444'; }
+  else if (val.length < 10) { hint.textContent = 'Good'; hint.style.color = '#f59e0b'; }
+  else { hint.textContent = 'Strong'; hint.style.color = '#22c55e'; }
+}
+
+async function handleSignup(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submit-btn');
+  const errBox = document.getElementById('error-box');
+  const okBox  = document.getElementById('success-box');
+  btn.textContent = 'Creating account...';
+  btn.disabled = true;
+  errBox.style.display = 'none';
+  okBox.style.display  = 'none';
+
+  try {
+    const r = await fetch('/api/auth/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: document.getElementById('username').value.trim(),
+        email:    document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+      })
+    });
+    const d = await r.json();
+    if (!r.ok) throw new Error(d.error || 'Signup failed');
+    okBox.textContent = 'Account created! Redirecting...';
+    okBox.style.display = 'block';
+    setTimeout(() => window.location.href = '/', 800);
+  } catch(err) {
+    errBox.textContent = err.message;
+    errBox.style.display = 'block';
+    btn.textContent = 'Create Account';
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
